@@ -5,13 +5,13 @@
  */
 
 @theme {
-  --color-paper: oklch(97.4% 0.012 95);
-  --color-paper-2: oklch(95.5% 0.018 100);
-  --color-paper-3: oklch(93.2% 0.022 102);
-  --color-ink: oklch(22% 0.022 60);
-  --color-ink-2: oklch(32% 0.018 70);
-  --color-muted: oklch(48% 0.016 80);
-  --color-rule: oklch(88% 0.014 95);
+  --color-paper: oklch(99.4% 0.002 250);
+  --color-paper-2: oklch(96.6% 0.004 250);
+  --color-paper-3: oklch(94% 0.005 250);
+  --color-ink: oklch(22% 0.012 260);
+  --color-ink-2: oklch(32% 0.01 260);
+  --color-muted: oklch(48% 0.008 260);
+  --color-rule: oklch(90% 0.006 250);
   --color-accent: oklch(69.6% 0.17 162.48);
   --color-accent-2: oklch(62% 0.155 162);
   --color-accent-soft: oklch(94% 0.04 162);
@@ -27,15 +27,41 @@
   --radius-md: 16px;
   --radius-lg: 28px;
   --radius-xl: 32px;
-  --shadow-card: 0 18px 50px -28px oklch(22% 0.02 60 / 0.35);
+  --shadow-card: 0 18px 50px -28px oklch(22% 0.01 250 / 0.28);
   --shadow-float: 0 30px 70px -36px oklch(22% 0.03 160 / 0.45);
   --max-width-page: 1440px;
   --animate-blink: blink 1s steps(2) infinite;
+  --animate-terminal-popup: terminal-popup-in 300ms ease both;
+  --animate-logo-marquee: logo-marquee 48s linear infinite;
 }
 
 @keyframes blink {
   50% {
     opacity: 0;
+  }
+}
+
+@keyframes terminal-popup-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes logo-marquee {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-terminal-popup,
+  .animate-logo-marquee {
+    animation: none;
   }
 }
 
@@ -59,8 +85,9 @@
     background: var(--color-paper);
     color: var(--color-ink-2);
     font-family: var(--font-sans);
+    font-size: 1.125rem;
     font-weight: 400;
-    line-height: 1.55;
+    line-height: 1.6;
   }
 
   a {

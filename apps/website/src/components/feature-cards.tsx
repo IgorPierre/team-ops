@@ -1,63 +1,90 @@
-import { TerminalBackground } from "@/components/terminal-background";
+import Image from "next/image";
+
+import { AgnosticBackground } from "@/components/agnostic-background";
+import { MagnetLinesBackground } from "@/components/magnet-lines-background";
 import { Button } from "@/components/ui/button";
-import { Card, CardBody, CardFooter, CardTitle, Code } from "@/components/ui/card";
-import { ChipList } from "@/components/ui/chip";
+import { Card, CardBody, CardFooter, CardTitle } from "@/components/ui/card";
+import type { Messages } from "@/i18n";
+import { InlineMarkup } from "@/i18n/markup";
 import { wrap } from "@/lib/styles";
 
 const GITHUB = "https://github.com/team-ops/team-ops";
 
-const AGENTS = ["Cursor", "Claude Code", "Codex", "Copilot", "OpenCode"] as const;
+const CLIS = [
+  { name: "Claude", src: "/clis/claude.svg" },
+  { name: "OpenAI", src: "/clis/openai.svg" },
+  { name: "Gemini", src: "/clis/gemini.svg" },
+  { name: "Copilot", src: "/clis/githubcopilot.svg" },
+  { name: "OpenCode", src: "/clis/opencode.svg" },
+  { name: "Qwen", src: "/clis/qwen.svg" },
+] as const;
 
-export function FeatureCards() {
+export function FeatureCards({ copy }: { copy: Messages["features"] }) {
   return (
     <section className={`${wrap} py-16`} id="features">
       <div className="grid min-w-0 gap-6 sm:grid-cols-2">
-        <Card background={<TerminalBackground />} contentClassName="pr-[42%] sm:pr-[46%]">
-          <CardTitle>AI-native and agnostic</CardTitle>
-          <CardBody className="text-ink-2">
-            Works with the coding agent you already pay for. MCP lists, upserts, and moves work through the same Go API
-            humans use. It never talks to PostgreSQL.
-          </CardBody>
+        <Card
+          className="min-h-[300px] rounded-2xl bg-origin-border shadow-lg"
+          contentClassName="min-h-[300px]"
+          background={<AgnosticBackground />}
+        >
+          <CardTitle>{copy.aTitle}</CardTitle>
+          <CardBody className="text-ink-2">{copy.aBody}</CardBody>
           <CardFooter>
-            <ChipList items={AGENTS} />
+            <div className="flex flex-row flex-wrap items-center gap-x-5 gap-y-3 md:gap-x-6">
+              {CLIS.map((cli) => (
+                <span key={cli.name} className="flex items-center gap-2 opacity-55 transition-opacity duration-300 hover:opacity-100">
+                  <Image
+                    src={cli.src}
+                    alt=""
+                    title={cli.name}
+                    width={28}
+                    height={28}
+                    className="size-7 brightness-0"
+                  />
+                  <span className="text-sm text-ink" style={{ fontFamily: "ui-sans-serif, system-ui, sans-serif" }}>
+                    {cli.name}
+                  </span>
+                </span>
+              ))}
+            </div>
           </CardFooter>
         </Card>
 
         <Card>
-          <CardTitle>Version, not last-write-wins.</CardTitle>
+          <CardTitle>{copy.bTitle}</CardTitle>
           <CardBody className="text-ink-2">
-            Every task carries a version. Updates send <Code>expectedVersion</Code>. A conflict returns{" "}
-            <Code>TASK_VERSION_CONFLICT</Code> and the board rolls back the optimistic move.
+            <InlineMarkup text={copy.bBody} />
           </CardBody>
           <CardFooter>
             <Button variant="pill" href="#product">
-              How the board works
+              {copy.bCta}
             </Button>
           </CardFooter>
         </Card>
 
         <Card>
-          <CardTitle>Your PostgreSQL. Zero vendor SDK.</CardTitle>
+          <CardTitle>{copy.cTitle}</CardTitle>
           <CardBody className="text-ink-2">
-            Docker, RDS, Cloud SQL, Neon, Supabase — one <Code>DATABASE_URL</Code>. The app never depends on a Team-Ops
-            cloud or a hosted control plane.
-          </CardBody>
-          <CardFooter>
-            <Button variant="pill" href="#install">
-              Bring your own database
-            </Button>
-          </CardFooter>
-        </Card>
-
-        <Card>
-          <CardTitle>Open source. MIT. Self hosted.</CardTitle>
-          <CardBody className="text-ink-2">
-            Fork it, host it, patch it. No central account. API keys are hashed. Passwords use Argon2id. Put TLS in
-            front with the reverse proxy you already run.
+            <InlineMarkup text={copy.cBody} />
           </CardBody>
           <CardFooter>
             <Button variant="pill" href={GITHUB}>
-              View on GitHub
+              {copy.cCta}
+            </Button>
+          </CardFooter>
+        </Card>
+
+        <Card
+          className="min-h-[300px] rounded-2xl bg-origin-border shadow-lg"
+          contentClassName="min-h-[300px]"
+          background={<MagnetLinesBackground />}
+        >
+          <CardTitle>{copy.dTitle}</CardTitle>
+          <CardBody className="text-ink-2">{copy.dBody}</CardBody>
+          <CardFooter>
+            <Button variant="pill" href={GITHUB}>
+              {copy.dCta}
             </Button>
           </CardFooter>
         </Card>

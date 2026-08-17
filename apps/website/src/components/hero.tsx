@@ -1,62 +1,49 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
 
-import { BoardMock } from "@/components/board-mock";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/i18n/provider";
 import { wrap } from "@/lib/styles";
 
 const Dither = dynamic(() => import("@/components/dither/dither"), { ssr: false });
 
 const GITHUB = "https://github.com/team-ops/team-ops";
-const WAVE_GREEN: [number, number, number] = [16 / 255, 185 / 255, 129 / 255];
+const WAVE_GREEN: [number, number, number] = [0.06274509803921569, 0.7254901960784313, 0.5058823529411764];
 
 export function Hero() {
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => setReduceMotion(media.matches);
-    sync();
-    media.addEventListener("change", sync);
-    return () => media.removeEventListener("change", sync);
-  }, []);
+  const { t } = useI18n();
 
   return (
-    <section className={`${wrap} relative pt-4 pb-36 sm:pt-20`} id="top">
-      <div className="relative isolate h-[620px] overflow-visible rounded-xl bg-graphite shadow-float">
-        <div className="absolute inset-0 z-0 overflow-hidden rounded-[inherit] [&_canvas]:block [&_canvas]:!h-full [&_canvas]:!w-full" aria-hidden="true">
+    <section className={`${wrap} relative pt-4 pb-6 sm:pt-20`} id="top">
+      <div className="relative isolate h-[460px] overflow-visible rounded-xl bg-graphite shadow-float">
+        <div className="absolute inset-0 z-0 overflow-hidden rounded-[inherit] [&_canvas]:block [&_canvas]:!h-full [&_canvas]:!w-full">
           <Dither
             waveColor={WAVE_GREEN}
-            waveSpeed={0.05}
-            waveFrequency={3}
-            waveAmplitude={0.3}
+            disableAnimation={false}
+            enableMouseInteraction={true}
+            mouseRadius={0.3}
             colorNum={4}
-            pixelSize={2}
-            disableAnimation={reduceMotion}
-            enableMouseInteraction={!reduceMotion}
-            mouseRadius={1}
+            waveAmplitude={0.33}
+            waveFrequency={3}
+            waveSpeed={0.01}
           />
         </div>
-        <div className="relative z-[1] min-w-0 max-w-2xl px-[clamp(24px,5vw,56px)] py-[clamp(28px,6vw,48px)] text-left text-accent-ink">
-          <h1 className="max-w-[32ch] font-display text-[72px] leading-[1.05] font-normal tracking-[-0.03em] text-accent-ink wrap-anywhere">
-            The board for humans and <mark className="bg-transparent text-accent-ink">agents.</mark>
+        <div className="pointer-events-none relative z-[1] min-w-0 max-w-5xl px-18 py-12 text-left text-accent-ink">
+          <h1 className="w-full font-display text-[clamp(3.25rem,6.2vw,6rem)] leading-[1.05] font-normal tracking-[-0.03em] text-accent-ink">
+            {t.hero.title1}
+            <br />
+            {t.hero.title2}
           </h1>
-          <p className="mt-5 max-w-[34ch] text-lg text-accent-ink/85">
-            Open source Kanban. You host it. Agents keep it current.
-          </p>
+          <p className="mt-5 max-w-[40ch] text-2xl text-accent-ink/85">{t.hero.subtitle}</p>
           <div className="mt-8 flex flex-wrap justify-start gap-3">
-            <Button variant="solid" href="#install">
-              Run it now
+            <Button className="pointer-events-auto" variant="solid" href={GITHUB}>
+              {t.hero.runItNow}
             </Button>
-            <Button variant="ghost" href={GITHUB}>
-              View source
+            <Button className="pointer-events-auto" variant="ghost" href={GITHUB}>
+              {t.hero.viewSource}
             </Button>
           </div>
-        </div>
-        <div className="absolute bottom-0 left-1/2 z-[2] w-[min(calc(100%-32px),56rem)] -translate-x-1/2 translate-y-[38%] lg:left-auto lg:right-8 lg:w-[min(62%,56rem)] lg:translate-x-0">
-          <BoardMock variant="hero" />
         </div>
       </div>
     </section>

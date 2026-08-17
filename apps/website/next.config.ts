@@ -2,7 +2,15 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  transpilePackages: ["three", "@react-three/fiber", "@react-three/postprocessing", "ogl"],
+  devIndicators: false,
+  transpilePackages: [
+    "three",
+    "@react-three/fiber",
+    "@react-three/postprocessing",
+    "ogl",
+    "@paper-design/shaders-react",
+    "@paper-design/shaders",
+  ],
 };
 
 export default nextConfig;

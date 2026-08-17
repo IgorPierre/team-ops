@@ -45,7 +45,7 @@ export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingEle
 export function CardBody({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("mt-4 max-w-[46ch] text-[1.05rem] leading-relaxed", className)}
+      className={cn("mt-4 max-w-[46ch] text-[1.175rem] leading-relaxed", className)}
       {...props}
     />
   );

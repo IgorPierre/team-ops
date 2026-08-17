@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Instrument_Serif } from "next/font/google";
+import { headers } from "next/headers";
+import type { ReactNode } from "react";
+
+import { DEFAULT_LOCALE, HTML_LANG, isLocale } from "@/i18n";
 
 import "./globals.css";
 
@@ -20,9 +24,12 @@ export const metadata: Metadata = {
     "Self-hosted engineering Kanban. Humans use the board. Agents use the API and MCP. PostgreSQL you control.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const raw = (await headers()).get("x-locale") ?? DEFAULT_LOCALE;
+  const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
+
   return (
-    <html lang="en">
+    <html lang={HTML_LANG[locale]}>
       <body className={`${serif.className} ${serif.variable} ${mono.variable} font-sans antialiased`}>
         <div
           className="pointer-events-none fixed inset-0 z-[70] mix-blend-multiply opacity-[0.04]"
@@ -32,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
           aria-hidden="true"
         />
-        {children}
+        <div className="mx-auto w-full max-w-page">{children}</div>
       </body>
     </html>
   );
