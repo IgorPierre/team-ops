@@ -1,0 +1,18 @@
+{
+  "name": "@team-ops/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "generate": "echo 'Types are maintained next to openapi/openapi.yaml'",
+    "lint": "echo 'ok'",
+    "test": "echo 'ok'",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "echo 'ok'"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

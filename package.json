@@ -1,0 +1,26 @@
+{
+  "name": "team-ops",
+  "private": true,
+  "version": "0.1.0",
+  "description": "The self-hosted engineering board for humans and AI agents.",
+  "license": "MIT",
+  "workspaces": [
+    "apps/web",
+    "apps/website",
+    "apps/mcp",
+    "packages/ui",
+    "packages/api-client",
+    "packages/config"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "generate": "npm run generate -w @team-ops/api-client"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

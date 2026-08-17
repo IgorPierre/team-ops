@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build
+dist/
+.next/
+out/
+*.tsbuildinfo
+apps/api/bin/
+apps/api/server
+coverage/
+
+# Env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Generated (kept in repo for convenience; regenerate with make generate)
+# apps/api/internal/db/
+
+# Backups
+backups/
+*.dump
+*.sql.gz
+
+# Logs
+*.log
+
+# Test
+/tmp/
+
+# Hallmark
+.hallmark/preflight.json

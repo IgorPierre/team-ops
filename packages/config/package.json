@@ -1,0 +1,11 @@
+{
+  "name": "@team-ops/config",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "lint": "echo 'ok'",
+    "test": "echo 'ok'",
+    "build": "echo 'ok'",
+    "typecheck": "echo 'ok'"
+  }
+}
