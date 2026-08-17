@@ -2,20 +2,25 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
-import { TeamOpsError } from "@team-ops/api-client";
+import { TeamOpsError, type RegistrationMode } from "@team-ops/api-client";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("alex@example.com");
-  const [password, setPassword] = useState("password123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [mode, setMode] = useState<RegistrationMode | null>(null);
+
+  useEffect(() => {
+    void api.authConfig().then((c) => setMode(c.registration)).catch(() => setMode("invite_only"));
+  }, []);
 
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-sm flex-col justify-center gap-6 px-4">
@@ -57,12 +62,19 @@ export default function LoginPage() {
           Sign in
         </Button>
       </form>
-      <p className="text-muted-foreground text-sm">
-        No account?{" "}
-        <Link className="underline" href="/register">
-          Create one
-        </Link>
-      </p>
+      {mode === "invite_only" ? (
+        <p className="text-muted-foreground text-sm">
+          This instance is invite-only. Use the link from an admin to create an
+          account.
+        </p>
+      ) : (
+        <p className="text-muted-foreground text-sm">
+          No account?{" "}
+          <Link className="underline" href="/register">
+            Create one
+          </Link>
+        </p>
+      )}
     </main>
   );
 }

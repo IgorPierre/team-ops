@@ -1,7 +1,8 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,11 +12,24 @@ import { TeamOpsError } from "@team-ops/api-client";
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const orgs = useQuery({ queryKey: ["organizations"], queryFn: () => api.listOrganizations() });
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [projectName, setProjectName] = useState("Website");
   const [projectKey, setProjectKey] = useState("SITE");
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (orgs.isError && orgs.error instanceof TeamOpsError && orgs.error.status === 401) {
+      router.replace("/login");
+    }
+  }, [orgs.error, orgs.isError, router]);
+
+  useEffect(() => {
+    if (orgs.isSuccess && (orgs.data?.length ?? 0) > 0) {
+      router.replace("/");
+    }
+  }, [orgs.data, orgs.isSuccess, router]);
 
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-md flex-col justify-center gap-6 px-4">

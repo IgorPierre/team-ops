@@ -91,10 +91,12 @@ export default function BoardPage() {
         />
         <BoardFilters members={members.data ?? []} value={filters} onChange={setFilters} />
         <div className="ml-auto flex items-center gap-2">
-          <Button size="sm" onClick={() => setFormOpen(true)}>
-            <PlusIcon />
-            New task
-          </Button>
+          {orgs.data?.find((item) => item.id === orgId)?.role !== "viewer" ? (
+            <Button size="sm" onClick={() => setFormOpen(true)}>
+              <PlusIcon />
+              New task
+            </Button>
+          ) : null}
           <Button
             size="icon"
             variant="ghost"
@@ -103,6 +105,9 @@ export default function BoardPage() {
           >
             {theme === "dark" ? <SunIcon /> : <MoonIcon />}
           </Button>
+          <Link href="/settings/members" className="text-sm hover:underline">
+            People
+          </Link>
           <Link href="/settings/agents" className="text-sm hover:underline">
             Agents
           </Link>
