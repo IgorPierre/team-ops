@@ -1,318 +1,235 @@
-"use client";
-
-import { useEffect, useMemo, useState } from "react";
+import { BoardMock } from "@/components/board-mock";
+import { FeatureCards } from "@/components/feature-cards";
+import { Hero } from "@/components/hero";
+import { SiteNav } from "@/components/site-nav";
+import { Button } from "@/components/ui/button";
+import { cn, heading, more, section, sectionHead, sectionTitle, wrap } from "@/lib/styles";
 
 const GITHUB = "https://github.com/team-ops/team-ops";
 
-const COMMANDS = [
-  { id: "docs", label: "Read the docs", href: "/#install" },
-  { id: "mcp", label: "Connect an MCP agent", href: "/#mcp" },
-  { id: "github", label: "View on GitHub", href: GITHUB },
-  { id: "security", label: "Security notes", href: "/#security" },
-];
+const AGENTS = ["Cursor", "Claude Code", "Codex", "Copilot", "OpenCode"];
+
+const FAQS = [
+  {
+    q: "Does Team-Ops require a Team-Ops cloud?",
+    a: "No. The instance and the database run on infrastructure you control. The coding agent you choose may still send context to its own provider.",
+  },
+  {
+    q: "Where should PostgreSQL live?",
+    a: "Anywhere compatible: Docker Compose, RDS, Cloud SQL, Neon, Supabase, Railway, a VM. Set DATABASE_URL. That is the whole integration.",
+  },
+  {
+    q: "How do agents authenticate?",
+    a: "Create an agent in the web app and issue a key that starts with tops_sk_. The API stores a hash, never the secret. MCP only needs TEAM_OPS_URL and TEAM_OPS_TOKEN.",
+  },
+  {
+    q: "Can two people edit the same card?",
+    a: "Yes, but not silently. Updates include expectedVersion. If the card moved underneath you, the API returns TASK_VERSION_CONFLICT and the UI rolls back.",
+  },
+  {
+    q: "Why only four columns?",
+    a: "So the board stays a board. Custom workflows, sprints, epics, and mobile apps are out of scope for v1 on purpose.",
+  },
+  {
+    q: "Is it free?",
+    a: "MIT. Clone it, run it, modify it. There is no paid Team-Ops tier in this repository.",
+  },
+] as const;
 
 export default function HomePage() {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [active, setActive] = useState(0);
-  const filtered = useMemo(
-    () =>
-      COMMANDS.filter((item) => item.label.toLowerCase().includes(query.toLowerCase())),
-    [query],
-  );
-
-  useEffect(() => {
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) entry.target.classList.add("is-in");
-        }
-      },
-      { threshold: 0.15 },
-    );
-    document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, []);
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setOpen((v) => !v);
-      }
-      if (e.key === "Escape") setOpen(false);
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
   return (
     <>
-      <header className="nav sticky top-0 z-20">
-        <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-3">
-          <span className="font-[family-name:var(--font-display)] text-base font-semibold tracking-tight">
-            Team-Ops
-          </span>
-          <nav className="hidden items-center gap-4 text-sm sm:flex">
-            <a href="#how" className="hover:text-[var(--color-ink)]">
-              How it works
-            </a>
-            <a href="#mcp" className="hover:text-[var(--color-ink)]">
-              MCP
-            </a>
-            <a href="#install" className="hover:text-[var(--color-ink)]">
-              Install
-            </a>
-          </nav>
-          <button
-            type="button"
-            className="kbtn ml-auto rounded-[6px] border border-[var(--color-rule)] px-2 py-1 font-[family-name:var(--font-mono)] text-xs tracking-wide"
-            onClick={() => setOpen(true)}
-          >
-            ⌘K
-          </button>
-          <a href={GITHUB} className="btn-primary px-3 py-1.5 text-sm">
-            View on GitHub
-          </a>
-        </div>
-      </header>
+      <a
+        className="absolute top-[-40px] left-4 z-[600] rounded-sm bg-ink px-3 py-2 text-paper focus:top-4"
+        href="#main"
+      >
+        Skip to content
+      </a>
+      <SiteNav />
+      <main id="main">
+        <Hero />
 
-      <main>
-        <section className="mx-auto grid max-w-6xl gap-10 px-4 py-16 lg:grid-cols-2 lg:items-center lg:py-24">
-          <div className="min-w-0">
-            <p className="font-[family-name:var(--font-mono)] text-xs tracking-[0.06em] uppercase">
-              Open source · Self hosted · PostgreSQL
-            </p>
-            <h1 className="mt-4 font-[family-name:var(--font-display)] text-[length:var(--text-display)] leading-[1.08] font-semibold tracking-[-0.03em] text-[var(--color-ink)]">
-              The self-hosted engineering board for humans and AI agents.
-            </h1>
-            <p className="mt-5 max-w-[65ch] text-lg">
-              Developers keep coding. Agents keep the board updated. Team-Ops is a Kanban hub you
-              run on infrastructure you control.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <a href={GITHUB} className="btn-primary px-4 py-2 text-sm">
-                View on GitHub
-              </a>
-              <a href="#install" className="rounded-[6px] border border-[var(--color-rule)] px-4 py-2 text-sm">
-                Read the Docs
-              </a>
-            </div>
-          </div>
-          <figure className="code-card min-w-0 p-4 text-sm">
-            <div className="mb-3 flex items-center justify-between text-xs">
-              <span>POST /v1/tasks/erp-142/move</span>
-              <span className="status-ok">200 OK</span>
-            </div>
-            <pre className="overflow-x-auto whitespace-pre-wrap">
-              <span className="tok-key">status</span>: <span>&quot;review&quot;</span>
-              {"\n"}
-              <span className="tok-key">expectedVersion</span>: 14{"\n"}
-              <span className="tok-key">actor</span>: Claude Code / Alex
-            </pre>
-          </figure>
-        </section>
-
-        <section id="how" className="bg-[var(--color-graphite)] py-20 text-[var(--color-graphite-ink)]">
-          <div className="mx-auto max-w-6xl px-4">
-            <p className="font-[family-name:var(--font-mono)] text-xs tracking-[0.06em] uppercase">
-              How it works
-            </p>
-            <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-semibold">
-              Developers keep coding. Agents keep the board updated.
-            </h2>
-            <ol className="mt-10 grid gap-8 md:grid-cols-4">
-              {[
-                ["1.0", "Developer", "Work in Cursor, Claude Code, Codex, or the editor you already use."],
-                ["2.0", "Coding agent", "The agent looks up the task, moves it, and writes progress."],
-                ["3.0", "Team-Ops API", "All writes go through PostgreSQL. No SaaS control plane."],
-                ["4.0", "Shared board", "The rest of the team sees status without a standup script."],
-              ].map(([n, t, d]) => (
-                <li key={n} className="reveal border-t border-white/15 pt-4">
-                  <p className="font-[family-name:var(--font-mono)] text-xs tracking-[0.06em] uppercase">
-                    {n}
-                  </p>
-                  <h3 className="mt-2 font-[family-name:var(--font-display)] text-xl font-medium">{t}</h3>
-                  <p className="mt-2 text-sm text-white/70">{d}</p>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-6xl px-4 py-20">
-          <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold text-[var(--color-ink)]">
-            Four columns. That is the board.
-          </h2>
-          <p className="mt-3 max-w-[65ch]">
-            Backlog, In Progress, Review, Done. Drag a card, the API stores position and writes an
-            activity. Columns stay put.
-          </p>
-          <div className="mt-8 grid auto-cols-[200px] grid-flow-col gap-3 overflow-x-auto md:auto-cols-fr">
-            {["Backlog", "In Progress", "Review", "Done"].map((col, i) => (
-              <div key={col} className="rounded-[10px] border border-[var(--color-rule)] p-3">
-                <p className="text-sm font-semibold">{col}</p>
-                <div className="mt-3 space-y-2">
-                  {(i === 3 ? ["Setup project"] : i === 2 ? ["Invoice rounding"] : ["Auth sessions", "MCP docs"]).map(
-                    (card) => (
-                      <div key={card} className="rounded-[6px] border border-[var(--color-rule)] bg-[var(--color-paper-2)] p-2 text-sm">
-                        <p className="font-[family-name:var(--font-mono)] text-[10px] tracking-wide uppercase">
-                          ERP-{10 + i}
-                        </p>
-                        {card}
-                      </div>
-                    ),
-                  )}
-                </div>
-              </div>
+        <section className={cn(wrap, "pt-20 pb-12 text-center")}>
+          <p className="text-[0.8rem] tracking-[0.04em] text-muted">Works with the agents you already use</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-x-8 gap-y-5 text-[0.95rem] font-semibold text-ink-2 opacity-55">
+            {AGENTS.map((name) => (
+              <span key={name}>{name}</span>
             ))}
           </div>
         </section>
 
-        <section className="mx-auto grid max-w-6xl gap-10 px-4 py-16 lg:grid-cols-2">
-          <div>
-            <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold text-[var(--color-ink)]">
-              Built for agents, usable by people.
-            </h2>
-            <p className="mt-4 max-w-[65ch]">
-              Humans get a Trello-simple board. Agents get MCP tools that call the same API: list,
-              upsert, move, report progress, request review, complete.
+        <section className={cn(wrap, "py-16 text-center")}>
+          <figure>
+            <blockquote className="mx-auto max-w-[28ch] font-display text-[clamp(2rem,4.2vw+0.5rem,3.5rem)] leading-[1.15] font-normal text-ink">
+              Coding agents already <mark className="bg-transparent text-accent">write the code</mark>. The board still{" "}
+              <mark className="bg-transparent text-accent">lags behind</mark>.
+            </blockquote>
+            <figcaption className="mt-6 text-[0.9rem] text-muted">Team-Ops exists to close that gap.</figcaption>
+          </figure>
+        </section>
+
+        <section className={cn(section, wrap)} id="product">
+          <article className="min-w-0 rounded-lg border border-rule bg-paper p-8 shadow-card lg:p-12">
+            <h2 className={cn(heading, "text-[clamp(1.75rem,2.4vw+0.8rem,2.35rem)]")}>What is Team-Ops?</h2>
+            <p className="mt-4">
+              Team-Ops is a <strong className="font-semibold text-ink">self-hosted engineering Kanban</strong> for mixed
+              teams of people and coding agents. Humans get four fixed columns — Backlog, In Progress, Review, Done.
+              Agents get an HTTP API and an MCP adapter that speak the same rules: optimistic concurrency, idempotent{" "}
+              <strong className="font-semibold text-ink">external_ref</strong>, and an activity history of who did what.
+            </p>
+            <p className="mt-4">
+              There is no Team-Ops cloud. You run the API, the web app, and PostgreSQL on infrastructure you control — a
+              laptop, a VPS, or any host that speaks Postgres. MIT licensed. Fork it, host it, patch it.
+            </p>
+            <a className={more} href="#install">
+              Install locally →
+            </a>
+          </article>
+        </section>
+
+        <section className={cn(section, wrap)} id="agents">
+          <div className={sectionHead}>
+            <h2 className={sectionTitle}>Agents keep the board current.</h2>
+            <p className="mt-3">
+              Point MCP at your instance. The adapter never talks to the database — only to the API you already run.
             </p>
           </div>
-          <div>
-            <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold text-[var(--color-ink)]">
-              Self-hosted on purpose.
-            </h2>
-            <ul className="mt-4 space-y-2">
-              <li>Your infrastructure</li>
-              <li>Your PostgreSQL</li>
-              <li>Your data</li>
-              <li>Your agents</li>
-            </ul>
-            <p className="mt-4 max-w-[65ch] text-sm">
-              Team-Ops does not require a Team-Ops hosted backend. Your Team-Ops instance and
-              database run on infrastructure you control. The coding agent you choose may still
-              send context to its own provider.
+          <div className="min-w-0 overflow-hidden rounded-lg border border-rule shadow-card">
+            <div className="bg-paper-2 p-6">
+              <pre className="overflow-x-auto rounded-md bg-graphite p-5 font-mono text-[0.85rem] leading-relaxed text-graphite-ink">{`{
+  "mcpServers": {
+    "team-ops": {
+      "command": "npx",
+      "args": ["-y", "@team-ops/mcp"],
+      "env": {
+        "TEAM_OPS_URL": "http://localhost:8080",
+        "TEAM_OPS_TOKEN": "tops_sk_…"
+      }
+    }
+  }
+}`}</pre>
+            </div>
+            <p className="bg-graphite px-6 py-5 text-[0.95rem] text-graphite-ink">
+              Ask the agent to pick up ERP-142. It moves the card, writes progress, and the rest of the team sees it
+              without a standup script.
             </p>
           </div>
         </section>
 
-        <section className="mx-auto max-w-6xl px-4 py-16">
-          <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold text-[var(--color-ink)]">
-            Architecture
-          </h2>
-          <pre className="mt-4 overflow-x-auto rounded-[10px] border border-[var(--color-rule)] p-4 font-[family-name:var(--font-mono)] text-sm">
-            {`Developer  ↔  AI Agent  ↔  Team-Ops MCP
-                              ↓
-                         Team-Ops API
-                              ↓
-                          PostgreSQL
-                              ↓
-                         Team-Ops Web`}
-          </pre>
+        <FeatureCards />
+
+        <section className={cn(section, wrap, "text-center")}>
+          <h2 className={cn(sectionTitle, "text-accent-2")}>Open source. Self hosted.</h2>
+          <p className="mx-auto mt-5 max-w-[42rem] text-lg">
+            MIT licensed. No central account. API keys hashed. Passwords with Argon2id. Put TLS in front with the
+            reverse proxy you already use.
+          </p>
+          <figure className="mt-8 overflow-hidden rounded-lg border border-rule bg-paper-2">
+            <svg
+              className="block h-auto w-full"
+              viewBox="0 0 720 220"
+              role="img"
+              aria-label="Illustration of activity accumulating on a project board"
+            >
+              <defs>
+                <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="oklch(69.6% 0.17 162.48)" stopOpacity="0.35" />
+                  <stop offset="100%" stopColor="oklch(69.6% 0.17 162.48)" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M0 180 C 80 176, 120 150, 180 148 C 250 145, 280 110, 360 108 C 440 106, 480 84, 540 70 C 600 56, 660 40, 720 28 L 720 220 L 0 220 Z"
+                fill="url(#fill)"
+              />
+              <path
+                d="M0 180 C 80 176, 120 150, 180 148 C 250 145, 280 110, 360 108 C 440 106, 480 84, 540 70 C 600 56, 660 40, 720 28"
+                fill="none"
+                stroke="oklch(62% 0.155 162)"
+                strokeWidth="3"
+              />
+            </svg>
+            <figcaption className="px-6 pt-4 pb-5 text-[0.85rem] text-muted">
+              Activity is the product: every move, comment, and completion is recorded. This curve is a picture of that
+              idea — not a vanity metric.
+            </figcaption>
+          </figure>
         </section>
 
-        <section id="install" className="mx-auto max-w-6xl px-4 py-16">
-          <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold text-[var(--color-ink)]">
-            Installation
-          </h2>
-          <pre className="code-card mt-4 overflow-x-auto p-4 text-sm">
+        <section className={cn(section, wrap)}>
+          <div className={sectionHead}>
+            <h2 className={sectionTitle}>Everything else can wait.</h2>
+            <p className="mt-3">Status lives on the board, not in a chat thread that expired yesterday.</p>
+          </div>
+          <div className="grid min-w-0 gap-4 sm:grid-cols-2">
+            <article className="min-w-0 rounded-lg bg-graphite p-6 text-graphite-ink">
+              <h3 className={cn(heading, "mb-4 text-xl text-graphite-ink")}>The lag</h3>
+              <p className="grid gap-2 text-[0.88rem] opacity-80">
+                <span className="block rounded-sm bg-white/10 p-3">Where is auth?</span>
+                <span className="block rounded-sm bg-white/10 p-3">Did the agent finish the PR?</span>
+                <span className="block rounded-sm bg-white/10 p-3">Standup in 10 — update Jira first</span>
+              </p>
+            </article>
+            <article className="min-w-0 rounded-lg border border-rule bg-paper p-6">
+              <h3 className={cn(heading, "mb-4 text-xl")}>The board</h3>
+              <BoardMock variant="light" />
+            </article>
+          </div>
+        </section>
+
+        <section className={cn(section, wrap)} id="install">
+          <div className={sectionHead}>
+            <h2 className={sectionTitle}>Run it on your machine.</h2>
+          </div>
+          <pre className="overflow-x-auto rounded-md bg-graphite p-5 font-mono text-[0.85rem] leading-relaxed text-graphite-ink">
             {`git clone https://github.com/team-ops/team-ops
 cd team-ops
 cp .env.example .env
 docker compose up -d
 # open http://localhost:3000`}
+            <span className="ml-0.5 inline-block w-[0.55ch] animate-blink bg-accent motion-reduce:animate-none" aria-hidden="true" />
           </pre>
         </section>
 
-        <section id="mcp" className="mx-auto max-w-6xl px-4 py-16">
-          <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold text-[var(--color-ink)]">
-            MCP
-          </h2>
-          <p className="mt-3 max-w-[65ch]">
-            Point any MCP client at <code>@team-ops/mcp</code>. It only needs the instance URL and
-            an API key. It never talks to PostgreSQL.
-          </p>
-          <pre className="mt-4 overflow-x-auto rounded-[10px] border border-[var(--color-rule)] p-4 font-[family-name:var(--font-mono)] text-sm">
-            {`TEAM_OPS_URL=https://teamops.company.com
-TEAM_OPS_TOKEN=tops_sk_...`}
-          </pre>
+        <section className={cn(section, wrap)} id="faq">
+          <div className="mx-auto max-w-[56rem]">
+            <h2 className={cn(sectionTitle, "mb-12 text-center")}>Frequently asked</h2>
+            <dl>
+              {FAQS.map((item) => (
+                <div key={item.q}>
+                  <dt className="mt-8 font-semibold text-ink">{item.q}</dt>
+                  <dd className="mt-2 text-ink-2">{item.a}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
         </section>
 
-        <section id="security" className="mx-auto max-w-6xl px-4 py-16">
-          <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold text-[var(--color-ink)]">
-            Security
-          </h2>
-          <p className="mt-3 max-w-[65ch]">
-            Passwords are hashed with Argon2id. API keys are stored as hashes. Sessions are HTTP-only
-            cookies. Put TLS in front with Caddy, nginx, or your cloud load balancer. See SECURITY.md.
-          </p>
-        </section>
-
-        <section className="mx-auto max-w-6xl px-4 py-16">
-          <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold text-[var(--color-ink)]">
-            Open source
-          </h2>
-          <p className="mt-3 max-w-[65ch]">
-            MIT licensed. No central account. Fork it, host it, patch it. Contributions land through
-            GitHub.
-          </p>
-          <a href={GITHUB} className="btn-primary mt-6 inline-block px-4 py-2 text-sm">
+        <section className={cn(wrap, "py-24 text-center")}>
+          <h2 className={cn(sectionTitle, "mb-8")}>Clone it. Run it. Connect an agent.</h2>
+          <Button variant="accent" href={GITHUB}>
             View on GitHub
-          </a>
+          </Button>
         </section>
       </main>
-
-      <footer className="border-t border-[var(--color-rule)]">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-sm">
-          <span className="font-[family-name:var(--font-display)] font-medium">Team-Ops</span>
-          <span>The self-hosted engineering board for humans and AI agents.</span>
+      <footer className="border-t border-rule py-6">
+        <div className={cn(wrap, "flex flex-wrap items-center justify-between gap-x-6 gap-y-3 text-[0.85rem] text-muted")}>
+          <p>Team-Ops · MIT</p>
+          <nav className="flex flex-wrap gap-4" aria-label="Footer">
+            <a className="hover:text-ink" href={GITHUB}>
+              GitHub
+            </a>
+            <a className="hover:text-ink" href="#install">
+              Install
+            </a>
+            <a className="hover:text-ink" href="#faq">
+              FAQ
+            </a>
+            <a className="hover:text-ink" href={`${GITHUB}/blob/main/SECURITY.md`}>
+              Security
+            </a>
+          </nav>
         </div>
       </footer>
-
-      {open ? (
-        <div
-          className="fixed inset-0 z-50 flex items-start justify-center bg-black/30 pt-24"
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className="w-full max-w-lg rounded-[10px] border border-[var(--color-rule)] bg-[var(--color-paper)] p-3"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <input
-              autoFocus
-              className="w-full rounded-[6px] border border-[var(--color-rule)] px-3 py-2 font-[family-name:var(--font-mono)] text-sm"
-              placeholder="Filter commands"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setActive(0);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "ArrowDown") setActive((i) => Math.min(i + 1, filtered.length - 1));
-                if (e.key === "ArrowUp") setActive((i) => Math.max(i - 1, 0));
-                if (e.key === "Enter" && filtered[active]) {
-                  window.location.href = filtered[active].href;
-                }
-              }}
-            />
-            <ul className="mt-2">
-              {filtered.map((item, i) => (
-                <li key={item.id}>
-                  <a
-                    href={item.href}
-                    className={`block rounded-[6px] px-3 py-2 text-sm ${i === active ? "bg-[var(--color-paper-2)]" : ""}`}
-                  >
-                    {item.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      ) : null}
     </>
   );
 }
