@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: teamops
+          POSTGRES_PASSWORD: teamops
+          POSTGRES_DB: teamops
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U teamops -d teamops"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: apps/api
+    env:
+      DATABASE_URL: postgres://teamops:teamops@localhost:5432/teamops?sslmode=disable
+      MIGRATIONS_DIR: ../../db/migrations
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+      - name: Vet
+        run: go vet ./...
+      - name: Build
+        run: go build ./cmd/server
+      - name: Migrate
+        run: go run ./cmd/migrate up
+      - name: Test
+        run: go test ./...
+
+  node:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm install
+      - name: Web
+        run: |
+          npm run lint -w @team-ops/web
+          npm run typecheck -w @team-ops/web
+          npm run test -w @team-ops/web
+          npm run build -w @team-ops/web
+      - name: MCP
+        run: |
+          npm run lint -w @team-ops/mcp
+          npm run test -w @team-ops/mcp
+          npm run build -w @team-ops/mcp
+      - name: Website
+        run: npm run build -w @team-ops/website

@@ -1,0 +1,12 @@
+.git
+.next
+node_modules
+apps/api/bin
+backups
+*.dump
+.env
+.env.local
+coverage
+apps/web/.next
+apps/website/.next
+apps/mcp/dist

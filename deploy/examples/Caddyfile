@@ -1,0 +1,5 @@
+# Optional Caddy in front of Team-Ops
+#
+# teamops.example.com {
+#   reverse_proxy web:3000
+# }

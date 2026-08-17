@@ -1,0 +1,8 @@
+# Use with an external PostgreSQL instance.
+#   docker compose -f docker-compose.yml -f deploy/examples/docker-compose.external-db.yml up -d
+services:
+  postgres:
+    profiles: ["disabled"]
+  api:
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
