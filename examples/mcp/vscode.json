@@ -1,0 +1,13 @@
+{
+  "servers": {
+    "team-ops": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@team-ops/mcp"],
+      "env": {
+        "TEAM_OPS_URL": "http://localhost:8080",
+        "TEAM_OPS_TOKEN": "tops_sk_replace_me"
+      }
+    }
+  }
+}

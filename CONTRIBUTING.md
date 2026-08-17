@@ -36,3 +36,6 @@ make build
 
 Pull requests should stay small. Match the existing style. Do not add
 message buses, custom workflow engines, or extra column types in V1.
+
+The product loop is: run the board → issue an agent key → MCP + skill in
+the coding agent → the Kanban stays current. See `docs/getting-started`.

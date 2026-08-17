@@ -29,7 +29,6 @@ docker compose up -d
 Open http://localhost:3000 and create an account. Demo data (optional):
 
 ```bash
-docker compose exec api /app/server   # API already migrated on boot
 # From a dev checkout:
 make db-up db-migrate db-seed
 ```
@@ -39,8 +38,8 @@ Seed login after `make db-seed`: `alex@example.com` / `password123`
 Connect an agent
 ----------------
 
-1. In the web app, open **Agents** and create an agent + API key.
-2. Configure MCP:
+1. In the web app, open **Agents** and create an agent + API key (`tops_sk_…`).
+2. Point MCP at your instance (Cursor `.cursor/mcp.json`):
 
 ```json
 {
@@ -57,7 +56,15 @@ Connect an agent
 }
 ```
 
+3. Copy [`skills/team-ops/SKILL.md`](skills/team-ops/SKILL.md) into
+   `.cursor/skills/team-ops/` of the repo you are coding in (or
+   `~/.cursor/skills/team-ops/`).
+
 Ask the agent to pick up a task. Watch the board move.
+
+Snippets for Claude Code and Copilot: [docs/mcp](docs/mcp/README.md).
+From this clone, without npm: `npm run build -w @team-ops/mcp` then run
+`node apps/mcp/dist/index.js`.
 
 External PostgreSQL
 -------------------
