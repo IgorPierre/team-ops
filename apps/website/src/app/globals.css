@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+/* Hallmark · genre: modern-minimal · macrostructure: Workbench · theme: Cobalt
+ * tone: technical · nav: bordered ⌘K · footer: Ft2
+ */
+:root {
+  --color-paper: oklch(98.5% 0.004 250);
+  --color-paper-2: oklch(96.5% 0.006 250);
+  --color-ink: oklch(24% 0.02 258);
+  --color-ink-2: oklch(34% 0.018 257);
+  --color-muted: oklch(52% 0.015 257);
+  --color-rule: oklch(90% 0.01 250);
+  --color-rule-2: oklch(40% 0.02 260);
+  --color-accent: oklch(58% 0.2 256);
+  --color-accent-ink: oklch(98% 0.01 250);
+  --color-graphite: oklch(22% 0.016 260);
+  --color-graphite-ink: oklch(94% 0.01 250);
+  --color-focus: oklch(58% 0.2 256);
+  --radius: 6px;
+  --radius-lg: 10px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur: 600ms;
+  --text-display: clamp(2.5rem, 5vw + 0.5rem, 4.5rem);
+}
+
+html,
+body {
+  overflow-x: clip;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink-2);
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out);
+}
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+.nav {
+  border-bottom: 1px solid var(--color-rule);
+  backdrop-filter: blur(8px);
+  background: color-mix(in oklab, var(--color-paper) 88%, transparent);
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  border-radius: var(--radius);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.05);
+}
+.btn-primary:focus-visible,
+.btn-ghost:focus-visible,
+.kbtn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.code-card {
+  background: var(--color-graphite);
+  border: 1px solid var(--color-rule-2);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 2px oklch(24% 0.02 258 / 0.05);
+  font-family: var(--font-mono);
+  color: var(--color-graphite-ink);
+}
+
+.tok-key {
+  color: var(--color-accent);
+}
+.status-ok {
+  color: var(--color-accent);
+  font: 500 0.75rem/1 var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
