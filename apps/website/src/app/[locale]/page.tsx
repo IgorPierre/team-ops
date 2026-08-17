@@ -6,9 +6,8 @@ import { SiteNav } from "@/components/site-nav";
 import { Button } from "@/components/ui/button";
 import { getMessages, isLocale } from "@/i18n";
 import { InlineMarkup } from "@/i18n/markup";
+import { GITHUB } from "@/lib/site";
 import { bodyCopy, cn, more, section, sectionHead, sectionLead, sectionTitle, wrap } from "@/lib/styles";
-
-const GITHUB = "https://github.com/team-ops/team-ops";
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

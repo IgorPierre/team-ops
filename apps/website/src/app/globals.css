@@ -1,9 +1,5 @@
 @import "tailwindcss";
 
-/* Hallmark · macrostructure: Marquee Hero · theme: studied-DNA + accent #10b981
- * display/body: Instrument Serif · Tailwind utilities only
- */
-
 @theme {
   --color-paper: oklch(99.4% 0.002 250);
   --color-paper-2: oklch(96.6% 0.004 250);
@@ -23,6 +19,7 @@
   --font-sans: var(--font-display-face), "Instrument Serif", ui-serif, Georgia, serif;
   --font-display: var(--font-display-face), "Instrument Serif", ui-serif, Georgia, serif;
   --font-mono: var(--font-mono-face), ui-monospace, monospace;
+  --font-brand: ui-sans-serif, system-ui, sans-serif;
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 28px;

@@ -1,20 +1,12 @@
 import Image from "next/image";
 
+import { CLIS } from "@/lib/clis";
 import { wrap } from "@/lib/styles";
-
-const AGENTS = [
-  { name: "Claude", src: "/clis/claude.svg" },
-  { name: "OpenAI", src: "/clis/openai.svg" },
-  { name: "Gemini", src: "/clis/gemini.svg" },
-  { name: "Copilot", src: "/clis/githubcopilot.svg" },
-  { name: "OpenCode", src: "/clis/opencode.svg" },
-  { name: "Qwen", src: "/clis/qwen.svg" },
-] as const;
 
 function LogoRow({ hidden }: { hidden?: boolean }) {
   return (
     <div className="flex shrink-0 items-center gap-x-16 px-10 sm:gap-x-24" aria-hidden={hidden || undefined}>
-      {AGENTS.map((agent) => (
+      {CLIS.map((agent) => (
         <div key={agent.name} className="flex items-center gap-4 opacity-50">
           <Image
             src={agent.src}
@@ -23,10 +15,7 @@ function LogoRow({ hidden }: { hidden?: boolean }) {
             height={48}
             className="size-12 brightness-0"
           />
-          <span
-            className="text-[1.45rem] font-semibold tracking-tight text-ink whitespace-nowrap"
-            style={{ fontFamily: "ui-sans-serif, system-ui, sans-serif" }}
-          >
+          <span className="font-brand text-[1.45rem] font-semibold tracking-tight text-ink whitespace-nowrap">
             {agent.name}
           </span>
         </div>

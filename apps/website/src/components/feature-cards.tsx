@@ -6,18 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardFooter, CardTitle } from "@/components/ui/card";
 import type { Messages } from "@/i18n";
 import { InlineMarkup } from "@/i18n/markup";
+import { CLIS } from "@/lib/clis";
+import { GITHUB } from "@/lib/site";
 import { wrap } from "@/lib/styles";
-
-const GITHUB = "https://github.com/team-ops/team-ops";
-
-const CLIS = [
-  { name: "Claude", src: "/clis/claude.svg" },
-  { name: "OpenAI", src: "/clis/openai.svg" },
-  { name: "Gemini", src: "/clis/gemini.svg" },
-  { name: "Copilot", src: "/clis/githubcopilot.svg" },
-  { name: "OpenCode", src: "/clis/opencode.svg" },
-  { name: "Qwen", src: "/clis/qwen.svg" },
-] as const;
 
 export function FeatureCards({ copy }: { copy: Messages["features"] }) {
   return (
@@ -42,9 +33,7 @@ export function FeatureCards({ copy }: { copy: Messages["features"] }) {
                     height={28}
                     className="size-7 brightness-0"
                   />
-                  <span className="text-sm text-ink" style={{ fontFamily: "ui-sans-serif, system-ui, sans-serif" }}>
-                    {cli.name}
-                  </span>
+                  <span className="font-brand text-sm text-ink">{cli.name}</span>
                 </span>
               ))}
             </div>

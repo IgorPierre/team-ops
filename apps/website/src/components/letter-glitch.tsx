@@ -174,6 +174,7 @@ export default function LetterGlitch({
 
     window.addEventListener("resize", handleResize);
     return () => {
+      clearTimeout(resizeTimeout);
       cancelAnimationFrame(animationRef.current);
       window.removeEventListener("resize", handleResize);
     };

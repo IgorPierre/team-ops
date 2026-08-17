@@ -5,9 +5,8 @@ import { useEffect, useState } from "react";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/provider";
+import { GITHUB } from "@/lib/site";
 import { cn, focusRing, wrap } from "@/lib/styles";
-
-const GITHUB = "https://github.com/team-ops/team-ops";
 
 export function SiteNav() {
   const { t } = useI18n();

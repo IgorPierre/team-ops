@@ -1,8 +1,9 @@
 "use client";
 
-import { type RefObject, useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 
 import MagnetLines from "@/components/magnet-lines";
+import { useIsVisible } from "@/lib/use-is-visible";
 
 export function MagnetLinesBackground() {
   const ref = useRef<HTMLDivElement>(null);
@@ -27,31 +28,4 @@ export function MagnetLinesBackground() {
       />
     </div>
   );
-}
-
-let observer: IntersectionObserver;
-const observerTargets = new WeakMap<Element, (entry: IntersectionObserverEntry) => void>();
-
-function useIsVisible(ref: RefObject<HTMLElement | null>) {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    observer ??= new IntersectionObserver((entries) => {
-      for (const entry of entries) {
-        observerTargets.get(entry.target)?.(entry);
-      }
-    });
-
-    const element = ref.current;
-    if (!element) return;
-    observerTargets.set(element, (entry) => setVisible(entry.isIntersecting));
-    observer.observe(element);
-
-    return () => {
-      observer.unobserve(element);
-      observerTargets.delete(element);
-    };
-  }, [ref]);
-
-  return visible;
 }

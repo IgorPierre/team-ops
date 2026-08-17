@@ -4,12 +4,10 @@ import dynamic from "next/dynamic";
 
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/provider";
+import { ACCENT_WAVE, GITHUB } from "@/lib/site";
 import { wrap } from "@/lib/styles";
 
 const Dither = dynamic(() => import("@/components/dither/dither"), { ssr: false });
-
-const GITHUB = "https://github.com/team-ops/team-ops";
-const WAVE_GREEN: [number, number, number] = [0.06274509803921569, 0.7254901960784313, 0.5058823529411764];
 
 export function Hero() {
   const { t } = useI18n();
@@ -19,7 +17,7 @@ export function Hero() {
       <div className="relative isolate h-[460px] overflow-visible rounded-xl bg-graphite shadow-float">
         <div className="absolute inset-0 z-0 overflow-hidden rounded-[inherit] [&_canvas]:block [&_canvas]:!h-full [&_canvas]:!w-full">
           <Dither
-            waveColor={WAVE_GREEN}
+            waveColor={ACCENT_WAVE}
             disableAnimation={false}
             enableMouseInteraction={true}
             mouseRadius={0.3}

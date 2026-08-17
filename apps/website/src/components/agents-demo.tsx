@@ -14,6 +14,7 @@ import { CopyableCommand } from "@/components/copyable-command";
 import LetterGlitch from "@/components/letter-glitch";
 import { useI18n } from "@/i18n/provider";
 import { InlineMarkup } from "@/i18n/markup";
+import { GITHUB } from "@/lib/site";
 import { cn } from "@/lib/styles";
 
 function PipelineReadyWindow({
@@ -138,7 +139,7 @@ export function AgentsDemo() {
         </div>
         <p className="mt-2 px-1 text-[0.95rem] leading-relaxed text-muted">
           <InlineMarkup text={t.agents.needs} />{" "}
-          <a href="https://github.com/team-ops/team-ops" className="text-ink underline underline-offset-2">
+          <a href={GITHUB} className="text-ink underline underline-offset-2">
             {t.agents.runStackFirst}
           </a>
           .

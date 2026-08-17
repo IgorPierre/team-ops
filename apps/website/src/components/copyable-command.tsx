@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckIcon, CopyIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { cn } from "@/lib/styles";
 
@@ -22,13 +22,18 @@ export function CopyableCommand({
 }) {
   const [copied, setCopied] = useState(false);
 
+  useEffect(() => {
+    if (!copied) return;
+    const id = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(id);
+  }, [copied]);
+
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(command);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Non-secure context or permission denied — fail silently.
+      // Clipboard can fail in non-secure contexts.
     }
   }
 
