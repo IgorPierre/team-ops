@@ -1,0 +1,787 @@
+openapi: 3.1.0
+info:
+  title: Team-Ops API
+  version: 0.1.0
+  description: Self-hosted engineering board for humans and AI agents.
+servers:
+  - url: /v1
+tags:
+  - name: Auth
+  - name: Organizations
+  - name: Projects
+  - name: Tasks
+  - name: Agents
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/User"
+  /auth/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/User"
+  /auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logout
+      responses:
+        "200":
+          $ref: "#/components/responses/OK"
+  /auth/me:
+    get:
+      tags: [Auth]
+      operationId: me
+      responses:
+        "200":
+          $ref: "#/components/responses/User"
+  /organizations:
+    get:
+      tags: [Organizations]
+      operationId: listOrganizations
+      responses:
+        "200":
+          $ref: "#/components/responses/OrganizationList"
+    post:
+      tags: [Organizations]
+      operationId: createOrganization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrganizationRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/Organization"
+  /organizations/{orgId}/members:
+    get:
+      tags: [Organizations]
+      operationId: listMembers
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+      responses:
+        "200":
+          $ref: "#/components/responses/MemberList"
+    post:
+      tags: [Organizations]
+      operationId: addMember
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/Member"
+  /projects:
+    get:
+      tags: [Projects]
+      operationId: listProjects
+      parameters:
+        - in: query
+          name: organizationId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/ProjectList"
+    post:
+      tags: [Projects]
+      operationId: createProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProjectRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/Project"
+  /tasks:
+    get:
+      tags: [Tasks]
+      operationId: listTasks
+      parameters:
+        - in: query
+          name: organizationId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: projectId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: assigneeId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: status
+          schema:
+            $ref: "#/components/schemas/TaskStatus"
+        - in: query
+          name: priority
+          schema:
+            $ref: "#/components/schemas/Priority"
+        - in: query
+          name: blocked
+          schema:
+            type: boolean
+        - in: query
+          name: source
+          schema:
+            $ref: "#/components/schemas/Source"
+        - in: query
+          name: updatedAfter
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: externalRef
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/TaskList"
+    post:
+      tags: [Tasks]
+      operationId: createTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTaskRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/Task"
+        "409":
+          $ref: "#/components/responses/Error"
+  /tasks/{taskId}:
+    get:
+      tags: [Tasks]
+      operationId: getTask
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      responses:
+        "200":
+          $ref: "#/components/responses/Task"
+    patch:
+      tags: [Tasks]
+      operationId: updateTask
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTaskRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/Task"
+        "409":
+          $ref: "#/components/responses/Error"
+  /tasks/{taskId}/move:
+    post:
+      tags: [Tasks]
+      operationId: moveTask
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MoveTaskRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/Task"
+        "409":
+          $ref: "#/components/responses/Error"
+  /tasks/{taskId}/progress:
+    post:
+      tags: [Tasks]
+      operationId: reportProgress
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProgressRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/Task"
+  /tasks/{taskId}/comments:
+    get:
+      tags: [Tasks]
+      operationId: listComments
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      responses:
+        "200":
+          $ref: "#/components/responses/CommentList"
+    post:
+      tags: [Tasks]
+      operationId: addComment
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/Comment"
+  /tasks/{taskId}/block:
+    post:
+      tags: [Tasks]
+      operationId: blockTask
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlockRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/Task"
+  /tasks/{taskId}/unblock:
+    post:
+      tags: [Tasks]
+      operationId: unblockTask
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VersionRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/Task"
+  /tasks/{taskId}/review:
+    post:
+      tags: [Tasks]
+      operationId: requestReview
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/Task"
+  /tasks/{taskId}/complete:
+    post:
+      tags: [Tasks]
+      operationId: completeTask
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/Task"
+  /tasks/{taskId}/activities:
+    get:
+      tags: [Tasks]
+      operationId: listActivities
+      parameters:
+        - $ref: "#/components/parameters/TaskId"
+      responses:
+        "200":
+          $ref: "#/components/responses/ActivityList"
+  /agents:
+    get:
+      tags: [Agents]
+      operationId: listAgents
+      parameters:
+        - in: query
+          name: organizationId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/AgentList"
+    post:
+      tags: [Agents]
+      operationId: createAgent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAgentRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/Agent"
+  /agents/{agentId}/api-keys:
+    get:
+      tags: [Agents]
+      operationId: listAPIKeys
+      parameters:
+        - $ref: "#/components/parameters/AgentId"
+      responses:
+        "200":
+          $ref: "#/components/responses/APIKeyList"
+    post:
+      tags: [Agents]
+      operationId: createAPIKey
+      parameters:
+        - $ref: "#/components/parameters/AgentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAPIKeyRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/APIKeyCreated"
+components:
+  parameters:
+    OrgId:
+      name: orgId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    TaskId:
+      name: taskId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    AgentId:
+      name: agentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    Envelope:
+      type: object
+      required: [data, error, meta]
+      properties:
+        data: {}
+        error:
+          $ref: "#/components/schemas/ErrorBody"
+        meta:
+          type: object
+    ErrorBody:
+      type: object
+      nullable: true
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    TaskStatus:
+      type: string
+      enum: [backlog, in_progress, review, done]
+    Priority:
+      type: string
+      enum: [low, medium, high]
+    Source:
+      type: string
+      enum: [manual, ai, integration]
+    RegisterRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name: { type: string }
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string }
+        password: { type: string }
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        email: { type: string }
+        avatarUrl: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+    Organization:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+        color: { type: string, nullable: true }
+        role: { type: string }
+        createdAt: { type: string, format: date-time }
+    CreateOrganizationRequest:
+      type: object
+      required: [name, slug]
+      properties:
+        name: { type: string }
+        slug: { type: string }
+        color: { type: string }
+    Member:
+      type: object
+      properties:
+        userId: { type: string, format: uuid }
+        name: { type: string }
+        email: { type: string }
+        avatarUrl: { type: string, nullable: true }
+        role: { type: string, enum: [admin, developer, viewer] }
+        createdAt: { type: string, format: date-time }
+    MemberRequest:
+      type: object
+      required: [email, role]
+      properties:
+        email: { type: string }
+        role: { type: string, enum: [admin, developer, viewer] }
+    Project:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        organizationId: { type: string, format: uuid }
+        name: { type: string }
+        key: { type: string }
+        description: { type: string }
+        createdAt: { type: string, format: date-time }
+    CreateProjectRequest:
+      type: object
+      required: [organizationId, name, key]
+      properties:
+        organizationId: { type: string, format: uuid }
+        name: { type: string }
+        key: { type: string }
+        description: { type: string }
+    Task:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        number: { type: integer }
+        key: { type: string }
+        organizationId: { type: string, format: uuid }
+        projectId: { type: string, format: uuid }
+        projectKey: { type: string }
+        projectName: { type: string }
+        title: { type: string }
+        description: { type: string }
+        acceptanceCriteria: { type: string }
+        status: { $ref: "#/components/schemas/TaskStatus" }
+        priority: { $ref: "#/components/schemas/Priority" }
+        assigneeId: { type: string, format: uuid, nullable: true }
+        reporterId: { type: string, format: uuid, nullable: true }
+        dueDate: { type: string, nullable: true }
+        position: { type: string }
+        blocked: { type: boolean }
+        blockedReason: { type: string, nullable: true }
+        source: { $ref: "#/components/schemas/Source" }
+        externalRef: { type: string, nullable: true }
+        sourceMetadata: { type: object }
+        completionSummary: { type: string, nullable: true }
+        version: { type: integer }
+        commentCount: { type: integer }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    CreateTaskRequest:
+      type: object
+      required: [organizationId, projectId, title]
+      properties:
+        organizationId: { type: string, format: uuid }
+        projectId: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string }
+        acceptanceCriteria: { type: string }
+        status: { $ref: "#/components/schemas/TaskStatus" }
+        priority: { $ref: "#/components/schemas/Priority" }
+        assigneeId: { type: string, format: uuid }
+        dueDate: { type: string }
+        externalRef: { type: string }
+        source: { $ref: "#/components/schemas/Source" }
+        sourceMetadata: { type: object }
+    UpdateTaskRequest:
+      type: object
+      required: [expectedVersion]
+      properties:
+        title: { type: string }
+        description: { type: string }
+        acceptanceCriteria: { type: string }
+        status: { $ref: "#/components/schemas/TaskStatus" }
+        priority: { $ref: "#/components/schemas/Priority" }
+        assigneeId: { type: string, format: uuid, nullable: true }
+        clearAssignee: { type: boolean }
+        dueDate: { type: string }
+        expectedVersion: { type: integer }
+    MoveTaskRequest:
+      type: object
+      required: [status, expectedVersion]
+      properties:
+        status: { $ref: "#/components/schemas/TaskStatus" }
+        position: { type: string }
+        expectedVersion: { type: integer }
+    ProgressRequest:
+      type: object
+      required: [summary, expectedVersion]
+      properties:
+        summary: { type: string }
+        branch: { type: string }
+        commitShas:
+          type: array
+          items: { type: string }
+        pullRequestUrl: { type: string }
+        tests: { type: string }
+        blockers: { type: string }
+        expectedVersion: { type: integer }
+    CommentRequest:
+      type: object
+      required: [content]
+      properties:
+        content: { type: string }
+        metadata: { type: object }
+    Comment:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        taskId: { type: string, format: uuid }
+        authorType: { type: string, enum: [user, agent, system] }
+        authorId: { type: string, format: uuid, nullable: true }
+        content: { type: string }
+        metadata: { type: object }
+        createdAt: { type: string, format: date-time }
+    BlockRequest:
+      type: object
+      required: [reason, expectedVersion]
+      properties:
+        reason: { type: string }
+        expectedVersion: { type: integer }
+    VersionRequest:
+      type: object
+      required: [expectedVersion]
+      properties:
+        expectedVersion: { type: integer }
+    ReviewRequest:
+      type: object
+      required: [summary, expectedVersion]
+      properties:
+        summary: { type: string }
+        pullRequestUrl: { type: string }
+        commitShas:
+          type: array
+          items: { type: string }
+        tests: { type: string }
+        expectedVersion: { type: integer }
+    CompleteRequest:
+      type: object
+      required: [completionSummary, acceptanceCriteriaMet, expectedVersion]
+      properties:
+        completionSummary: { type: string }
+        acceptanceCriteriaMet: { type: boolean }
+        expectedVersion: { type: integer }
+    Activity:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        taskId: { type: string, format: uuid }
+        actorType: { type: string }
+        actorId: { type: string, format: uuid, nullable: true }
+        action: { type: string }
+        oldValue: {}
+        newValue: {}
+        metadata: { type: object }
+        createdAt: { type: string, format: date-time }
+    Agent:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        developerId: { type: string, format: uuid, nullable: true }
+        organizationId: { type: string, format: uuid, nullable: true }
+        description: { type: string, nullable: true }
+        active: { type: boolean }
+        lastSeenAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+    CreateAgentRequest:
+      type: object
+      required: [organizationId, name]
+      properties:
+        organizationId: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+    CreateAPIKeyRequest:
+      type: object
+      properties:
+        name: { type: string }
+        scopes:
+          type: array
+          items: { type: string }
+    APIKey:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        agentId: { type: string, format: uuid }
+        name: { type: string }
+        prefix: { type: string }
+        scopes:
+          type: array
+          items: { type: string }
+        key: { type: string }
+        createdAt: { type: string, format: date-time }
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    OK:
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    User:
+      description: User
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    Organization:
+      description: Organization
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    OrganizationList:
+      description: Organizations
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    Member:
+      description: Member
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    MemberList:
+      description: Members
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    Project:
+      description: Project
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    ProjectList:
+      description: Projects
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    Task:
+      description: Task
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    TaskList:
+      description: Tasks
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    Comment:
+      description: Comment
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    CommentList:
+      description: Comments
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    ActivityList:
+      description: Activities
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    Agent:
+      description: Agent
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    AgentList:
+      description: Agents
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    APIKeyList:
+      description: API keys
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    APIKeyCreated:
+      description: API key including the raw secret, shown once
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
