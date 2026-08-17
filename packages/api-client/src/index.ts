@@ -2,6 +2,7 @@ export type TaskStatus = "backlog" | "in_progress" | "review" | "done";
 export type Priority = "low" | "medium" | "high";
 export type Source = "manual" | "ai" | "integration";
 export type Role = "admin" | "developer" | "viewer";
+export type RegistrationMode = "bootstrap" | "open" | "invite_only";
 
 export interface Envelope<T> {
   data: T;
@@ -116,6 +117,25 @@ export interface APIKey {
   createdAt: string;
 }
 
+export interface AuthConfig {
+  registration: RegistrationMode;
+}
+
+export interface InvitePreview {
+  organizationName: string;
+  role: Role;
+  email?: string | null;
+}
+
+export interface Invite {
+  id: string;
+  email?: string | null;
+  role: Role;
+  expiresAt: string;
+  createdAt: string;
+  token?: string;
+}
+
 export interface ListTasksQuery {
   organizationId: string;
   projectId?: string;
@@ -184,7 +204,7 @@ export class TeamOpsClient {
     return json.data;
   }
 
-  register(body: { name: string; email: string; password: string }) {
+  register(body: { name: string; email: string; password: string; inviteToken?: string }) {
     return this.request<User>("POST", "/auth/register", body);
   }
   login(body: { email: string; password: string }) {
@@ -195,6 +215,12 @@ export class TeamOpsClient {
   }
   me() {
     return this.request<User>("GET", "/auth/me");
+  }
+  authConfig() {
+    return this.request<AuthConfig>("GET", "/auth/config");
+  }
+  peekInvite(token: string) {
+    return this.request<InvitePreview>("GET", "/auth/invite", undefined, { token });
   }
 
   listOrganizations() {
@@ -208,6 +234,21 @@ export class TeamOpsClient {
   }
   addMember(orgId: string, body: { email: string; role: Role }) {
     return this.request<Member>("POST", `/organizations/${orgId}/members`, body);
+  }
+  updateMember(orgId: string, userId: string, body: { role: Role }) {
+    return this.request<{ role: Role }>("PATCH", `/organizations/${orgId}/members/${userId}`, body);
+  }
+  removeMember(orgId: string, userId: string) {
+    return this.request<{ ok: boolean }>("DELETE", `/organizations/${orgId}/members/${userId}`);
+  }
+  listInvites(orgId: string) {
+    return this.request<Invite[]>("GET", `/organizations/${orgId}/invites`);
+  }
+  createInvite(orgId: string, body: { email?: string; role?: Role } = {}) {
+    return this.request<Invite>("POST", `/organizations/${orgId}/invites`, body);
+  }
+  revokeInvite(orgId: string, inviteId: string) {
+    return this.request<{ ok: boolean }>("DELETE", `/organizations/${orgId}/invites/${inviteId}`);
   }
 
   listProjects(organizationId: string) {

@@ -34,3 +34,12 @@ func NewAPIKey() (raw, prefix, hash string, err error) {
 	hash = HashToken(raw)
 	return raw, prefix, hash, nil
 }
+
+func NewInviteToken() (raw, hash string, err error) {
+	buf := make([]byte, 24)
+	if _, err = rand.Read(buf); err != nil {
+		return "", "", fmt.Errorf("read invite token: %w", err)
+	}
+	raw = "tops_inv_" + hex.EncodeToString(buf)
+	return raw, HashToken(raw), nil
+}

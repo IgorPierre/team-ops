@@ -36,3 +36,6 @@ DELETE FROM sessions WHERE token_hash = $1;
 
 -- name: DeleteExpiredSessions :exec
 DELETE FROM sessions WHERE expires_at < now();
+
+-- name: CountUsers :one
+SELECT count(*)::bigint FROM users;

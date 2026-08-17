@@ -52,8 +52,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	authSvc := auth.NewService(pool, cfg.CookieName, cfg.CookieSecure, cfg.SessionTTL, log)
-	orgSvc := organizations.New(pool)
+	authSvc := auth.NewService(pool, cfg.CookieName, cfg.CookieSecure, cfg.SessionTTL, cfg.RegistrationOpen, log)
+	orgSvc := organizations.New(pool, cfg.RegistrationOpen)
+	authSvc.SetInviteJoiner(orgSvc)
 	projectSvc := projects.New(pool, orgSvc)
 	taskSvc := tasks.New(pool, orgSvc)
 	agentSvc := agents.New(pool, orgSvc)

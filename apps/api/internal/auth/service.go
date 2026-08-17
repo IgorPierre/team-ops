@@ -20,29 +20,37 @@ import (
 )
 
 type Service struct {
-	q          *db.Queries
-	pool       *pgxpool.Pool
-	cookieName string
-	secure     bool
-	ttl        time.Duration
-	log        *slog.Logger
+	q                *db.Queries
+	pool             *pgxpool.Pool
+	cookieName       string
+	secure           bool
+	ttl              time.Duration
+	registrationOpen bool
+	invites          InviteJoiner
+	log              *slog.Logger
 }
 
-func NewService(pool *pgxpool.Pool, cookieName string, secure bool, ttl time.Duration, log *slog.Logger) *Service {
+func NewService(pool *pgxpool.Pool, cookieName string, secure bool, ttl time.Duration, registrationOpen bool, log *slog.Logger) *Service {
 	return &Service{
-		q:          db.New(pool),
-		pool:       pool,
-		cookieName: cookieName,
-		secure:     secure,
-		ttl:        ttl,
-		log:        log,
+		q:                db.New(pool),
+		pool:             pool,
+		cookieName:       cookieName,
+		secure:           secure,
+		ttl:              ttl,
+		registrationOpen: registrationOpen,
+		log:              log,
 	}
 }
 
+func (s *Service) SetInviteJoiner(j InviteJoiner) {
+	s.invites = j
+}
+
 type registerRequest struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Name        string `json:"name"`
+	Email       string `json:"email"`
+	Password    string `json:"password"`
+	InviteToken string `json:"inviteToken"`
 }
 
 type loginRequest struct {
@@ -60,11 +68,54 @@ type userDTO struct {
 
 func (s *Service) Routes() chi.Router {
 	r := chi.NewRouter()
+	r.Get("/config", s.handleConfig)
+	r.Get("/invite", s.handleInvitePeek)
 	r.Post("/register", s.handleRegister)
 	r.Post("/login", s.handleLogin)
 	r.Post("/logout", s.handleLogout)
 	r.Get("/me", s.handleMe)
 	return r
+}
+
+func (s *Service) handleConfig(w http.ResponseWriter, r *http.Request) {
+	mode, err := s.registrationMode(r.Context())
+	if err != nil {
+		httpx.Error(w, err)
+		return
+	}
+	httpx.JSON(w, http.StatusOK, map[string]string{"registration": string(mode)}, nil)
+}
+
+func (s *Service) handleInvitePeek(w http.ResponseWriter, r *http.Request) {
+	token := strings.TrimSpace(r.URL.Query().Get("token"))
+	if token == "" || s.invites == nil {
+		httpx.Error(w, apperr.New("INVALID_INVITE", "This invite is invalid or expired.", http.StatusForbidden))
+		return
+	}
+	preview, err := s.invites.Peek(r.Context(), token)
+	if err != nil {
+		httpx.Error(w, err)
+		return
+	}
+	httpx.JSON(w, http.StatusOK, map[string]any{
+		"organizationName": preview.OrganizationName,
+		"role":             preview.Role,
+		"email":            preview.Email,
+	}, nil)
+}
+
+func (s *Service) registrationMode(ctx context.Context) (RegistrationMode, error) {
+	n, err := s.q.CountUsers(ctx)
+	if err != nil {
+		return "", err
+	}
+	if n == 0 {
+		return RegistrationBootstrap, nil
+	}
+	if s.registrationOpen {
+		return RegistrationOpen, nil
+	}
+	return RegistrationInviteOnly, nil
 }
 
 func (s *Service) handleRegister(w http.ResponseWriter, r *http.Request) {
@@ -75,16 +126,38 @@ func (s *Service) handleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 	req.Name = strings.TrimSpace(req.Name)
 	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
+	req.InviteToken = strings.TrimSpace(req.InviteToken)
 	if req.Name == "" || req.Email == "" || len(req.Password) < 8 {
 		httpx.Error(w, apperr.New("VALIDATION", "Name, email, and a password of at least 8 characters are required.", http.StatusBadRequest))
 		return
 	}
+
+	mode, err := s.registrationMode(r.Context())
+	if err != nil {
+		httpx.Error(w, err)
+		return
+	}
+	if req.InviteToken == "" && mode == RegistrationInviteOnly {
+		httpx.Error(w, apperr.New("REGISTRATION_CLOSED", "This instance is invite-only. Ask an admin for a link.", http.StatusForbidden))
+		return
+	}
+
 	hash, err := HashPassword(req.Password)
 	if err != nil {
 		httpx.Error(w, err)
 		return
 	}
-	user, err := s.q.CreateUser(r.Context(), db.CreateUserParams{
+
+	ctx := r.Context()
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		httpx.Error(w, err)
+		return
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	q := s.q.WithTx(tx)
+
+	user, err := q.CreateUser(ctx, db.CreateUserParams{
 		Name:         req.Name,
 		Email:        req.Email,
 		PasswordHash: hash,
@@ -95,6 +168,20 @@ func (s *Service) handleRegister(w http.ResponseWriter, r *http.Request) {
 			httpx.Error(w, apperr.New("EMAIL_TAKEN", "An account with this email already exists.", http.StatusConflict))
 			return
 		}
+		httpx.Error(w, err)
+		return
+	}
+	if req.InviteToken != "" {
+		if s.invites == nil {
+			httpx.Error(w, apperr.New("INVALID_INVITE", "This invite is invalid or expired.", http.StatusForbidden))
+			return
+		}
+		if err := s.invites.Redeem(ctx, q, req.InviteToken, req.Email, user.ID); err != nil {
+			httpx.Error(w, err)
+			return
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
 		httpx.Error(w, err)
 		return
 	}

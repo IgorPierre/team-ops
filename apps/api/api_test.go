@@ -186,6 +186,82 @@ func TestPermissions(t *testing.T) {
 	}
 }
 
+func TestInviteJoin(t *testing.T) {
+	pool := testPool(t)
+	srv, adminClient := testServer(t, pool)
+	_ = register(t, adminClient, srv.URL, "Admin", uniqueEmail("invadmin"), "password123")
+	org := createOrg(t, adminClient, srv.URL, "Invite Co", uniqueSlug("invite"))
+
+	created := doOK(t, adminClient, http.MethodPost, srv.URL+"/v1/organizations/"+org.ID+"/invites", map[string]any{
+		"role": "developer",
+	})
+	var inv struct {
+		Token string `json:"token"`
+		Role  string `json:"role"`
+	}
+	mustUnmarshal(t, created.Data, &inv)
+	if !strings.HasPrefix(inv.Token, "tops_inv_") {
+		t.Fatalf("token: %s", inv.Token)
+	}
+
+	peek := doOK(t, http.DefaultClient, http.MethodGet, srv.URL+"/v1/auth/invite?token="+inv.Token, nil)
+	var preview struct {
+		OrganizationName string `json:"organizationName"`
+		Role             string `json:"role"`
+	}
+	mustUnmarshal(t, peek.Data, &preview)
+	if preview.OrganizationName != "Invite Co" || preview.Role != "developer" {
+		t.Fatalf("preview: %#v", preview)
+	}
+
+	jar, _ := cookiejar.New(nil)
+	joiner := &http.Client{Jar: jar, Timeout: 10 * time.Second}
+	_ = register(t, joiner, srv.URL, "Joiner", uniqueEmail("joiner"), "password123", inv.Token)
+	orgs := doOK(t, joiner, http.MethodGet, srv.URL+"/v1/organizations", nil)
+	var listed []orgDTO
+	mustUnmarshal(t, orgs.Data, &listed)
+	if len(listed) != 1 || listed[0].ID != org.ID {
+		t.Fatalf("joined orgs: %#v", listed)
+	}
+
+	badJar, _ := cookiejar.New(nil)
+	badClient := &http.Client{Jar: badJar, Timeout: 10 * time.Second}
+	bad := do(t, badClient, http.MethodPost, srv.URL+"/v1/auth/register", map[string]any{
+		"name": "Nope", "email": uniqueEmail("nope"), "password": "password123", "inviteToken": "tops_inv_deadbeef",
+	})
+	if bad.Error == nil || bad.Error.Code != "INVALID_INVITE" {
+		t.Fatalf("bad invite: %#v", bad.Error)
+	}
+}
+
+func TestClosedRegistration(t *testing.T) {
+	pool := testPool(t)
+	srv, c := testServerOpts(t, pool, false)
+	cfg := doOK(t, c, http.MethodGet, srv.URL+"/v1/auth/config", nil)
+	var mode struct {
+		Registration string `json:"registration"`
+	}
+	mustUnmarshal(t, cfg.Data, &mode)
+	env := do(t, c, http.MethodPost, srv.URL+"/v1/auth/register", map[string]any{
+		"name": "Stranger", "email": uniqueEmail("stranger"), "password": "password123",
+	})
+	if mode.Registration == "bootstrap" {
+		if env.Error != nil {
+			t.Fatalf("bootstrap register: %#v", env.Error)
+		}
+		again := do(t, c, http.MethodPost, srv.URL+"/v1/auth/register", map[string]any{
+			"name": "Two", "email": uniqueEmail("two"), "password": "password123",
+		})
+		if again.Error == nil || again.Error.Code != "REGISTRATION_CLOSED" {
+			t.Fatalf("second register: %#v", again.Error)
+		}
+		return
+	}
+	if env.Error == nil || env.Error.Code != "REGISTRATION_CLOSED" {
+		t.Fatalf("closed register: %#v", env.Error)
+	}
+}
+
 func testPool(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 	dsn := os.Getenv("TEST_DATABASE_URL")
@@ -210,9 +286,15 @@ func testPool(t *testing.T) *pgxpool.Pool {
 
 func testServer(t *testing.T, pool *pgxpool.Pool) (*httptest.Server, *http.Client) {
 	t.Helper()
+	return testServerOpts(t, pool, true)
+}
+
+func testServerOpts(t *testing.T, pool *pgxpool.Pool, registrationOpen bool) (*httptest.Server, *http.Client) {
+	t.Helper()
 	log := logging.Discard()
-	authSvc := auth.NewService(pool, "teamops_session", false, 24*time.Hour, log)
-	orgSvc := organizations.New(pool)
+	authSvc := auth.NewService(pool, "teamops_session", false, 24*time.Hour, registrationOpen, log)
+	orgSvc := organizations.New(pool, registrationOpen)
+	authSvc.SetInviteJoiner(orgSvc)
 	projectSvc := projects.New(pool, orgSvc)
 	taskSvc := tasks.New(pool, orgSvc)
 	agentSvc := agents.New(pool, orgSvc)
@@ -258,11 +340,13 @@ type taskDTO struct {
 	Version int32  `json:"version"`
 }
 
-func register(t *testing.T, client *http.Client, base, name, email, password string) userDTO {
+func register(t *testing.T, client *http.Client, base, name, email, password string, inviteToken ...string) userDTO {
 	t.Helper()
-	env := doOK(t, client, http.MethodPost, base+"/v1/auth/register", map[string]any{
-		"name": name, "email": email, "password": password,
-	})
+	body := map[string]any{"name": name, "email": email, "password": password}
+	if len(inviteToken) > 0 && inviteToken[0] != "" {
+		body["inviteToken"] = inviteToken[0]
+	}
+	env := doOK(t, client, http.MethodPost, base+"/v1/auth/register", body)
 	var u userDTO
 	mustUnmarshal(t, env.Data, &u)
 	return u

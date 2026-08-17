@@ -52,6 +52,25 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/User"
+  /auth/config:
+    get:
+      tags: [Auth]
+      operationId: authConfig
+      responses:
+        "200":
+          $ref: "#/components/responses/AuthConfig"
+  /auth/invite:
+    get:
+      tags: [Auth]
+      operationId: peekInvite
+      parameters:
+        - in: query
+          name: token
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          $ref: "#/components/responses/InvitePreview"
   /organizations:
     get:
       tags: [Organizations]
@@ -94,6 +113,42 @@ paths:
       responses:
         "201":
           $ref: "#/components/responses/Member"
+  /organizations/{orgId}/invites:
+    get:
+      tags: [Organizations]
+      operationId: listInvites
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+      responses:
+        "200":
+          $ref: "#/components/responses/InviteList"
+    post:
+      tags: [Organizations]
+      operationId: createInvite
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInviteRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/Invite"
+  /organizations/{orgId}/invites/{inviteId}:
+    delete:
+      tags: [Organizations]
+      operationId: revokeInvite
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - in: path
+          name: inviteId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          $ref: "#/components/responses/OK"
   /projects:
     get:
       tags: [Projects]
@@ -442,6 +497,7 @@ components:
         name: { type: string }
         email: { type: string, format: email }
         password: { type: string, minLength: 8 }
+        inviteToken: { type: string }
     LoginRequest:
       type: object
       required: [email, password]
@@ -487,6 +543,30 @@ components:
       properties:
         email: { type: string }
         role: { type: string, enum: [admin, developer, viewer] }
+    Invite:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, nullable: true }
+        role: { type: string, enum: [admin, developer, viewer] }
+        expiresAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        token: { type: string }
+    CreateInviteRequest:
+      type: object
+      properties:
+        email: { type: string }
+        role: { type: string, enum: [admin, developer, viewer] }
+    AuthConfig:
+      type: object
+      properties:
+        registration: { type: string, enum: [bootstrap, open, invite_only] }
+    InvitePreview:
+      type: object
+      properties:
+        organizationName: { type: string }
+        role: { type: string, enum: [admin, developer, viewer] }
+        email: { type: string, nullable: true }
     Project:
       type: object
       properties:
@@ -715,6 +795,30 @@ components:
             $ref: "#/components/schemas/Envelope"
     MemberList:
       description: Members
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    Invite:
+      description: Invite
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    InviteList:
+      description: Invites
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    AuthConfig:
+      description: Auth config
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    InvitePreview:
+      description: Invite preview
       content:
         application/json:
           schema:
