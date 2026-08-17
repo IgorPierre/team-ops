@@ -21,7 +21,9 @@ services:
       context: .
       dockerfile: deploy/docker/api.Dockerfile
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgres://teamops:teamops@postgres:5432/teamops?sslmode=disable}
+      # Always use the compose service hostname. Host `.env` DATABASE_URL
+      # (localhost) is for `make api-dev`, not for this container.
+      DATABASE_URL: postgres://teamops:teamops@postgres:5432/teamops?sslmode=disable
       HTTP_ADDR: :8080
       APP_URL: ${APP_URL:-http://localhost:3000}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
