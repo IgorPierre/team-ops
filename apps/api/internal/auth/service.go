@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -10,13 +9,13 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/team-ops/api/internal/actor"
 	"github.com/team-ops/api/internal/apperr"
 	"github.com/team-ops/api/internal/db"
+	"github.com/team-ops/api/platform/database"
 	httpx "github.com/team-ops/api/platform/http"
 )
 
@@ -92,7 +91,7 @@ func (s *Service) handleRegister(w http.ResponseWriter, r *http.Request) {
 		AvatarUrl:    nil,
 	})
 	if err != nil {
-		if isUniqueViolation(err) {
+		if database.IsUniqueViolation(err) {
 			httpx.Error(w, apperr.New("EMAIL_TAKEN", "An account with this email already exists.", http.StatusConflict))
 			return
 		}
@@ -263,10 +262,6 @@ func userDTOFrom(u db.User) userDTO {
 	}
 }
 
-func isUniqueViolation(err error) bool {
-	return strings.Contains(err.Error(), "duplicate key") || strings.Contains(err.Error(), "unique constraint")
-}
-
 func RequireActor(w http.ResponseWriter, r *http.Request) (actor.Actor, bool) {
 	a, ok := actor.From(r.Context())
 	if !ok {
@@ -274,8 +269,4 @@ func RequireActor(w http.ResponseWriter, r *http.Request) (actor.Actor, bool) {
 		return actor.Actor{}, false
 	}
 	return a, true
-}
-
-func PgErrIsNoRows(err error) bool {
-	return errors.Is(err, pgx.ErrNoRows)
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/team-ops/api/internal/auth"
 	"github.com/team-ops/api/internal/db"
 	"github.com/team-ops/api/internal/organizations"
+	"github.com/team-ops/api/platform/database"
 	httpx "github.com/team-ops/api/platform/http"
 )
 
@@ -116,7 +117,7 @@ func (s *Service) create(w http.ResponseWriter, r *http.Request) {
 		Description:    req.Description,
 	})
 	if err != nil {
-		if auth.IsUnique(err) {
+		if database.IsUniqueViolation(err) {
 			httpx.Error(w, apperr.New("KEY_TAKEN", "That project key is already used in this organization.", http.StatusConflict))
 			return
 		}

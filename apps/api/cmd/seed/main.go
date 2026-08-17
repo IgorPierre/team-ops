@@ -38,37 +38,37 @@ func main() {
 func seed(ctx context.Context, q *db.Queries) error {
 	hash, err := auth.HashPassword("password123")
 	if err != nil {
-		return err
+		return fmt.Errorf("hash seed password: %w", err)
 	}
 
 	alex, err := upsertUser(ctx, q, "Alex Rivera", "alex@example.com", hash)
 	if err != nil {
-		return err
+		return fmt.Errorf("seed user alex: %w", err)
 	}
 	maria, err := upsertUser(ctx, q, "Maria Chen", "maria@example.com", hash)
 	if err != nil {
-		return err
+		return fmt.Errorf("seed user maria: %w", err)
 	}
 	joao, err := upsertUser(ctx, q, "João Silva", "joao@example.com", hash)
 	if err != nil {
-		return err
+		return fmt.Errorf("seed user joao: %w", err)
 	}
 	carla, err := upsertUser(ctx, q, "Carla Mendes", "carla@example.com", hash)
 	if err != nil {
-		return err
+		return fmt.Errorf("seed user carla: %w", err)
 	}
 
 	north, err := upsertOrg(ctx, q, "Northwind Labs", "northwind", "#2563eb")
 	if err != nil {
-		return err
+		return fmt.Errorf("seed org northwind: %w", err)
 	}
 	atlas, err := upsertOrg(ctx, q, "Atlas Health", "atlas-health", "#059669")
 	if err != nil {
-		return err
+		return fmt.Errorf("seed org atlas: %w", err)
 	}
 	harbor, err := upsertOrg(ctx, q, "Harbor Freight", "harbor", "#d97706")
 	if err != nil {
-		return err
+		return fmt.Errorf("seed org harbor: %w", err)
 	}
 
 	for _, m := range []struct {
@@ -94,27 +94,27 @@ func seed(ctx context.Context, q *db.Queries) error {
 
 	site, err := upsertProject(ctx, q, north.ID, "Website", "SITE", "Marketing site and docs.")
 	if err != nil {
-		return err
+		return fmt.Errorf("seed project SITE: %w", err)
 	}
 	erp, err := upsertProject(ctx, q, north.ID, "ERP", "ERP", "Internal operations platform.")
 	if err != nil {
-		return err
+		return fmt.Errorf("seed project ERP: %w", err)
 	}
 	app, err := upsertProject(ctx, q, north.ID, "Mobile App", "APP", "Customer iOS/Android app.")
 	if err != nil {
-		return err
+		return fmt.Errorf("seed project APP: %w", err)
 	}
 	crm, err := upsertProject(ctx, q, atlas.ID, "Clinic CRM", "CRM", "Patient relationship tools.")
 	if err != nil {
-		return err
+		return fmt.Errorf("seed project CRM: %w", err)
 	}
 	apiP, err := upsertProject(ctx, q, atlas.ID, "Health API", "API", "FHIR-facing service.")
 	if err != nil {
-		return err
+		return fmt.Errorf("seed project API: %w", err)
 	}
 	wh, err := upsertProject(ctx, q, harbor.ID, "Warehouse", "WH", "Inventory and picking.")
 	if err != nil {
-		return err
+		return fmt.Errorf("seed project WH: %w", err)
 	}
 
 	agent, err := q.CreateAgent(ctx, db.CreateAgentParams{
@@ -124,7 +124,7 @@ func seed(ctx context.Context, q *db.Queries) error {
 		Description:    strPtr("Local coding agent used by Alex."),
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("seed agent: %w", err)
 	}
 
 	type spec struct {
@@ -171,11 +171,14 @@ func seed(ctx context.Context, q *db.Queries) error {
 	for _, t := range tasks {
 		n, err := q.IncrementProjectTaskCounter(ctx, t.project)
 		if err != nil {
-			return err
+			return fmt.Errorf("increment task counter: %w", err)
 		}
 		var due pgtype.Date
 		if t.due != "" {
-			tm, _ := time.Parse("2006-01-02", t.due)
+			tm, err := time.Parse("2006-01-02", t.due)
+			if err != nil {
+				return fmt.Errorf("parse due date for %q: %w", t.title, err)
+			}
 			due = pgtype.Date{Time: tm, Valid: true}
 		}
 		task, err := q.CreateTask(ctx, db.CreateTaskParams{
@@ -198,7 +201,10 @@ func seed(ctx context.Context, q *db.Queries) error {
 			SourceMetadata:     json.RawMessage(`{}`),
 		})
 		if err != nil {
-			continue
+			if database.IsUniqueViolation(err) {
+				continue
+			}
+			return fmt.Errorf("create task %q: %w", t.title, err)
 		}
 		created++
 		_, _ = q.CreateActivity(ctx, db.CreateActivityParams{

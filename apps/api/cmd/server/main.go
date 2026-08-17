@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -118,11 +119,14 @@ func main() {
 func runMigrations(databaseURL, dir string) error {
 	sqlDB, err := sql.Open("pgx", databaseURL)
 	if err != nil {
-		return err
+		return fmt.Errorf("open database for migrations: %w", err)
 	}
 	defer sqlDB.Close()
 	if err := goose.SetDialect("postgres"); err != nil {
-		return err
+		return fmt.Errorf("set goose dialect: %w", err)
 	}
-	return goose.Up(sqlDB, dir)
+	if err := goose.Up(sqlDB, dir); err != nil {
+		return fmt.Errorf("run migrations: %w", err)
+	}
+	return nil
 }

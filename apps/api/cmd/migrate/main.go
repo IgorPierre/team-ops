@@ -19,12 +19,12 @@ func main() {
 	}
 	sqlDB, err := sql.Open("pgx", cfg.DatabaseURL)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, fmt.Errorf("open database: %w", err))
 		os.Exit(1)
 	}
 	defer sqlDB.Close()
 	if err := goose.SetDialect("postgres"); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, fmt.Errorf("set goose dialect: %w", err))
 		os.Exit(1)
 	}
 	args := os.Args[1:]
@@ -33,7 +33,7 @@ func main() {
 		command = args[0]
 	}
 	if err := goose.Run(command, sqlDB, cfg.MigrationsDir, args[1:]...); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, fmt.Errorf("migrate %s: %w", command, err))
 		os.Exit(1)
 	}
 }

@@ -10,7 +10,7 @@ import (
 func NewSessionToken() (raw string, hash string, err error) {
 	buf := make([]byte, 32)
 	if _, err = rand.Read(buf); err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("read session token: %w", err)
 	}
 	raw = hex.EncodeToString(buf)
 	return raw, HashToken(raw), nil
@@ -24,7 +24,7 @@ func HashToken(raw string) string {
 func NewAPIKey() (raw, prefix, hash string, err error) {
 	buf := make([]byte, 24)
 	if _, err = rand.Read(buf); err != nil {
-		return "", "", "", err
+		return "", "", "", fmt.Errorf("read api key: %w", err)
 	}
 	raw = "tops_sk_" + hex.EncodeToString(buf)
 	if len(raw) < 16 {

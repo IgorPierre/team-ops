@@ -18,6 +18,7 @@ import (
 	"github.com/team-ops/api/internal/auth"
 	"github.com/team-ops/api/internal/db"
 	"github.com/team-ops/api/internal/organizations"
+	"github.com/team-ops/api/platform/database"
 	httpx "github.com/team-ops/api/platform/http"
 )
 
@@ -253,7 +254,7 @@ func (s *Service) Create(ctx context.Context, a actor.Actor, req createTaskReque
 		SourceMetadata:     meta,
 	})
 	if err != nil {
-		if auth.IsUnique(err) {
+		if database.IsUniqueViolation(err) {
 			return TaskDTO{}, apperr.New("DUPLICATE_EXTERNAL_REF", "A task with this external_ref already exists in the project.", http.StatusConflict)
 		}
 		return TaskDTO{}, err
@@ -310,19 +311,19 @@ func (s *Service) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	params := db.UpdateTaskParams{
-		ID:                   task.ID,
-		ExpectedVersion:      req.ExpectedVersion,
-		Title:                req.Title,
-		Description:          req.Description,
-		AcceptanceCriteria:   req.AcceptanceCriteria,
-		Status:               req.Status,
-		Priority:             req.Priority,
-		AssigneeID:           req.AssigneeID,
-		DueDate:              textDate(req.DueDate),
+		ID:                 task.ID,
+		ExpectedVersion:    req.ExpectedVersion,
+		Title:              req.Title,
+		Description:        req.Description,
+		AcceptanceCriteria: req.AcceptanceCriteria,
+		Status:             req.Status,
+		Priority:           req.Priority,
+		AssigneeID:         req.AssigneeID,
+		DueDate:            textDate(req.DueDate),
 	}
 	updated, err := s.q.UpdateTask(r.Context(), params)
 	if err != nil || (req.ClearAssignee && false) {
-		if auth.PgErrIsNoRows(err) || (err == nil && updated.ID == uuid.Nil) {
+		if database.IsNoRows(err) || (err == nil && updated.ID == uuid.Nil) {
 			httpx.Error(w, conflict())
 			return
 		}
@@ -337,7 +338,7 @@ func (s *Service) update(w http.ResponseWriter, r *http.Request) {
 			ExpectedVersion: updated.Version,
 		})
 		if err != nil {
-			if auth.PgErrIsNoRows(err) {
+			if database.IsNoRows(err) {
 				httpx.Error(w, conflict())
 				return
 			}
@@ -411,7 +412,7 @@ func (s *Service) Move(ctx context.Context, a actor.Actor, task db.Task, req mov
 		Version:  req.ExpectedVersion,
 	})
 	if err != nil {
-		if auth.PgErrIsNoRows(err) {
+		if database.IsNoRows(err) {
 			return TaskDTO{}, conflict()
 		}
 		return TaskDTO{}, err
@@ -478,7 +479,7 @@ func (s *Service) progress(w http.ResponseWriter, r *http.Request) {
 			BlockedReason:   &reason,
 		})
 		if err != nil {
-			if auth.PgErrIsNoRows(err) {
+			if database.IsNoRows(err) {
 				httpx.Error(w, conflict())
 				return
 			}
@@ -593,7 +594,7 @@ func (s *Service) block(w http.ResponseWriter, r *http.Request) {
 		BlockedReason:   &reason,
 	})
 	if err != nil {
-		if auth.PgErrIsNoRows(err) {
+		if database.IsNoRows(err) {
 			httpx.Error(w, conflict())
 			return
 		}
@@ -633,7 +634,7 @@ func (s *Service) unblock(w http.ResponseWriter, r *http.Request) {
 		BlockedReason:   &empty,
 	})
 	if err != nil {
-		if auth.PgErrIsNoRows(err) {
+		if database.IsNoRows(err) {
 			httpx.Error(w, conflict())
 			return
 		}
@@ -687,7 +688,7 @@ func (s *Service) review(w http.ResponseWriter, r *http.Request) {
 		Version:  req.ExpectedVersion,
 	})
 	if err != nil {
-		if auth.PgErrIsNoRows(err) {
+		if database.IsNoRows(err) {
 			httpx.Error(w, conflict())
 			return
 		}
@@ -710,9 +711,9 @@ func (s *Service) review(w http.ResponseWriter, r *http.Request) {
 }
 
 type completeRequest struct {
-	CompletionSummary      string `json:"completionSummary"`
-	AcceptanceCriteriaMet  bool   `json:"acceptanceCriteriaMet"`
-	ExpectedVersion        int32  `json:"expectedVersion"`
+	CompletionSummary     string `json:"completionSummary"`
+	AcceptanceCriteriaMet bool   `json:"acceptanceCriteriaMet"`
+	ExpectedVersion       int32  `json:"expectedVersion"`
 }
 
 func (s *Service) complete(w http.ResponseWriter, r *http.Request) {
@@ -751,7 +752,7 @@ func (s *Service) complete(w http.ResponseWriter, r *http.Request) {
 		CompletionSummary: &summary,
 	})
 	if err != nil {
-		if auth.PgErrIsNoRows(err) {
+		if database.IsNoRows(err) {
 			httpx.Error(w, conflict())
 			return
 		}
@@ -788,7 +789,7 @@ func (s *Service) archive(w http.ResponseWriter, r *http.Request) {
 		Version: req.ExpectedVersion,
 	})
 	if err != nil {
-		if auth.PgErrIsNoRows(err) {
+		if database.IsNoRows(err) {
 			httpx.Error(w, conflict())
 			return
 		}

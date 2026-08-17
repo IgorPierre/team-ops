@@ -15,6 +15,7 @@ import (
 	"github.com/team-ops/api/internal/apperr"
 	"github.com/team-ops/api/internal/auth"
 	"github.com/team-ops/api/internal/db"
+	"github.com/team-ops/api/platform/database"
 	httpx "github.com/team-ops/api/platform/http"
 )
 
@@ -128,7 +129,7 @@ func (s *Service) create(w http.ResponseWriter, r *http.Request) {
 		Color: req.Color,
 	})
 	if err != nil {
-		if auth.IsUnique(err) {
+		if database.IsUniqueViolation(err) {
 			httpx.Error(w, apperr.New("SLUG_TAKEN", "That organization slug is already in use.", http.StatusConflict))
 			return
 		}
@@ -239,7 +240,7 @@ func (s *Service) addMember(w http.ResponseWriter, r *http.Request) {
 		Role:           req.Role,
 	})
 	if err != nil {
-		if auth.IsUnique(err) {
+		if database.IsUniqueViolation(err) {
 			httpx.Error(w, apperr.New("ALREADY_MEMBER", "That user is already a member.", http.StatusConflict))
 			return
 		}
@@ -341,9 +342,6 @@ func (s *Service) Authorize(ctx context.Context, a actor.Actor, orgID uuid.UUID)
 	if a.IsAgent() {
 		if a.OrganizationID == nil || *a.OrganizationID != orgID {
 			return a, org, apperr.New("FORBIDDEN", "This agent cannot access that organization.", http.StatusForbidden)
-		}
-		if !a.HasScope("organizations:read") && len(a.Scopes) > 0 {
-			// agents with task scopes may still read the org they belong to
 		}
 		return a, org, nil
 	}
