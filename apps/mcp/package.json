@@ -2,25 +2,38 @@
   "name": "@team-ops/mcp",
   "version": "0.1.0",
   "description": "MCP server for Team-Ops. A thin adapter over the Team-Ops HTTP API.",
+  "license": "MIT",
   "type": "module",
   "bin": {
     "team-ops-mcp": "./dist/index.js"
   },
   "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/team-ops/team-ops",
+    "directory": "apps/mcp"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "tsx src/index.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "node build.mjs",
     "lint": "echo 'ok'",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
-    "@team-ops/api-client": "*",
     "zod": "^3.25.28"
   },
   "devDependencies": {
+    "@team-ops/api-client": "*",
     "@types/node": "^22.15.18",
+    "esbuild": "^0.25.8",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
     "vitest": "^3.1.3"
