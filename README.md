@@ -26,7 +26,8 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Open http://localhost:3000 and create an account. Demo data (optional):
+Open http://localhost:3000. The first account owns the instance; later
+people join with an invite from **People**. Demo data (optional):
 
 ```bash
 # From a dev checkout:

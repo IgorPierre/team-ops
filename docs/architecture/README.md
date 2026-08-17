@@ -15,6 +15,11 @@ Every mutating request carries an `Actor` (`user`, `agent`, or `system`).
 Task activities record who did what. Agents authenticate with hashed API
 keys and scopes. Users authenticate with Argon2id passwords and sessions.
 
+After the first account, registration is invite-only. An org admin creates
+a hashed invite token (`tops_inv_…`); the new user joins that org with a
+role (`admin`, `developer`, `viewer`). Agents never join as users — they
+authenticate with org-bound API keys.
+
 ## Concurrency
 
 Tasks have a `version` column. Updates send `expectedVersion`. A mismatch

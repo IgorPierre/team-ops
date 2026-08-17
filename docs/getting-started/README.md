@@ -14,10 +14,17 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Open http://localhost:3000 (or `https://your-host` behind TLS). Create an
-account, an organization, and a project.
+Open http://localhost:3000 (or `https://your-host` behind TLS). The first
+account on a new instance becomes the operator. After that, the instance is
+invite-only: **People → Create invite**, share the link. Teammates join with
+the role you picked (`admin`, `developer`, or `viewer`).
 
-Optional sample boards from a dev checkout: `make db-seed`.
+Agents never sign up. They only reach the board with a `tops_sk_…` key that
+an admin issues.
+
+Optional sample boards from a dev checkout: `make db-seed`. Seeded logins
+are `alex@example.com` / `password123`. Set `REGISTRATION_OPEN=true` only
+if you want anyone who can reach the URL to create their own account.
 
 External Postgres: [deployment](../deployment/external-postgres.md).
 
