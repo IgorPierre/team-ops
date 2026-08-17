@@ -36,6 +36,3 @@ backups/
 
 # Test
 /tmp/
-
-# Hallmark
-.hallmark/preflight.json

@@ -8,9 +8,7 @@
     "apps/web",
     "apps/website",
     "apps/mcp",
-    "packages/ui",
-    "packages/api-client",
-    "packages/config"
+    "packages/api-client"
   ],
   "scripts": {
     "dev": "npm run dev --workspaces --if-present",

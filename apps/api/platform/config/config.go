@@ -16,7 +16,6 @@ type Config struct {
 	CookieSecure  bool
 	CookieName    string
 	MigrationsDir string
-	SeedOnStart   bool
 	ShutdownWait  time.Duration
 	SessionTTL    time.Duration
 }
@@ -30,7 +29,6 @@ func Load() (Config, error) {
 		CookieSecure:  envBool("COOKIE_SECURE", false),
 		CookieName:    env("COOKIE_NAME", "teamops_session"),
 		MigrationsDir: env("MIGRATIONS_DIR", "../../db/migrations"),
-		SeedOnStart:   envBool("SEED_ON_START", false),
 		ShutdownWait:  15 * time.Second,
 		SessionTTL:    30 * 24 * time.Hour,
 	}
