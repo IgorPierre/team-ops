@@ -7,13 +7,13 @@ function LogoRow({ hidden }: { hidden?: boolean }) {
   return (
     <div className="flex shrink-0 items-center gap-x-16 px-10 sm:gap-x-24" aria-hidden={hidden || undefined}>
       {CLIS.map((agent) => (
-        <div key={agent.name} className="flex items-center gap-4 opacity-50">
+        <div key={agent.name} className="flex items-center gap-4 opacity-55 dark:opacity-70">
           <Image
             src={agent.src}
             alt=""
             width={48}
             height={48}
-            className="size-12 brightness-0"
+            className="size-12 brightness-0 dark:invert"
           />
           <span className="font-brand text-[1.45rem] font-semibold tracking-tight text-ink whitespace-nowrap">
             {agent.name}

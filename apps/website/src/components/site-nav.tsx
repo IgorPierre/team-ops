@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+import { LogoMark } from "@/components/logo-mark";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/provider";
 import { GITHUB } from "@/lib/site";
@@ -52,12 +54,7 @@ export function SiteNav() {
     >
       <div className={cn(wrap, "grid min-h-16 grid-cols-[1fr_auto] items-center gap-4 lg:grid-cols-[1fr_auto_1fr]")}>
         <a className="inline-flex items-center gap-2 whitespace-nowrap font-display text-[1.15rem] text-ink" href="#top">
-          <span className="inline-grid size-3.5 grid-cols-2 gap-0.5" aria-hidden="true">
-            <span className="rounded-[1px] bg-accent" />
-            <span className="rounded-[1px] bg-accent" />
-            <span className="rounded-[1px] bg-accent" />
-            <span className="rounded-[1px] bg-accent" />
-          </span>
+          <LogoMark />
           Team-Ops
         </a>
         <nav className="hidden justify-self-center gap-1 lg:flex" aria-label={t.nav.primary}>
@@ -76,6 +73,7 @@ export function SiteNav() {
         </nav>
         <div className="flex items-center justify-self-end gap-2">
           <LocaleSwitcher className="hidden sm:flex" />
+          <ThemeToggle />
           <Button variant="text" href={GITHUB}>
             {t.nav.source}
           </Button>
@@ -111,6 +109,7 @@ export function SiteNav() {
             {t.nav.viewSource}
           </a>
           <LocaleSwitcher />
+          <ThemeToggle />
         </nav>
       ) : null}
     </header>

@@ -33,6 +33,9 @@ export type Messages = {
     primary: string;
     mobile: string;
     language: string;
+    theme: string;
+    themeToDark: string;
+    themeToLight: string;
   };
   hero: {
     title1: string;
@@ -64,6 +67,8 @@ export type Messages = {
     copiedAria: string;
   };
   features: {
+    title: string;
+    lead: string;
     aTitle: string;
     aBody: string;
     bTitle: string;
@@ -77,6 +82,6 @@ export type Messages = {
     dCta: string;
   };
   faq: { title: string; items: FaqItem[] };
-  cta: { title: string; github: string };
+  cta: { title: string; titleLines: string[]; subtitle: string; github: string; scrollHint: string };
   footer: { install: string; faq: string; security: string; nav: string };
 };

@@ -5,6 +5,8 @@ import { cn } from "@/lib/styles";
 const variants = {
   solid:
     "bg-accent text-accent-ink hover:-translate-y-[1.5px] hover:bg-accent-2 active:translate-y-0",
+  inverse:
+    "border-0 bg-[#000] text-[#fff] opacity-100 hover:-translate-y-[1.5px] hover:bg-[#111] hover:text-[#fff] active:translate-y-0",
   ghost:
     "border-white/40 bg-white/10 text-accent-ink hover:border-white/70",
   accent:

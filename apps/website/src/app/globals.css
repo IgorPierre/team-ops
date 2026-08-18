@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-paper: oklch(99.4% 0.002 250);
   --color-paper-2: oklch(96.6% 0.004 250);
@@ -32,6 +34,21 @@
   --animate-logo-marquee: logo-marquee 48s linear infinite;
 }
 
+.dark {
+  --color-paper: oklch(18% 0.012 250);
+  --color-paper-2: oklch(22% 0.012 250);
+  --color-paper-3: oklch(26% 0.01 250);
+  --color-ink: oklch(96% 0.01 250);
+  --color-ink-2: oklch(86% 0.01 250);
+  --color-muted: oklch(68% 0.01 250);
+  --color-rule: oklch(32% 0.01 250);
+  --color-accent-soft: oklch(28% 0.05 162);
+  --color-graphite: oklch(14% 0.02 160);
+  --color-graphite-2: oklch(18% 0.018 160);
+  --shadow-card: 0 18px 50px -28px oklch(0% 0 0 / 0.55);
+  --shadow-float: 0 30px 70px -36px oklch(0% 0 0 / 0.65);
+}
+
 @keyframes blink {
   50% {
     opacity: 0;
@@ -55,10 +72,24 @@
   }
 }
 
+html[data-preloading] {
+  overflow: hidden;
+}
+
+html[data-preloading],
+html[data-preloading] body {
+  background: var(--color-graphite);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-terminal-popup,
   .animate-logo-marquee {
     animation: none;
+  }
+
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
   }
 }
 
@@ -70,6 +101,11 @@
 
   html {
     scroll-behavior: smooth;
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
   }
 
   @media (prefers-reduced-motion: reduce) {

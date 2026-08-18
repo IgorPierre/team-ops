@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { Preloader } from "@/components/preloader";
 import { I18nProvider } from "@/i18n/provider";
 import { getMessages, isLocale, LOCALES, type Locale } from "@/i18n";
 
@@ -42,6 +43,7 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   return (
     <I18nProvider locale={locale} t={t}>
+      <Preloader />
       {children}
     </I18nProvider>
   );

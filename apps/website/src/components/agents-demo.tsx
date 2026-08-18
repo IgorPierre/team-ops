@@ -26,7 +26,7 @@ function PipelineReadyWindow({
       {...props}
       className={cn("overflow-hidden rounded-md border border-rule bg-paper shadow-lg", props.className)}
     >
-      <p className="border-b border-rule px-4 py-2 text-center text-xs text-muted">ERP-142 — Auth sessions</p>
+      <p className="border-b border-rule px-4 py-2 text-center text-xs text-muted">ERP-142 Auth sessions</p>
       <p className="px-4 py-2 text-sm text-ink">{status}</p>
     </div>
   );

@@ -6,6 +6,17 @@ import { Effect } from "postprocessing";
 import { forwardRef, useEffect, useMemo, useRef, type ForwardRefExoticComponent, type Ref } from "react";
 import * as THREE from "three";
 
+// R3F still constructs THREE.Clock (deprecated in r183). Remove when R3F v10 ships.
+const prevThreeConsole = THREE.getConsoleFunction();
+THREE.setConsoleFunction((type, message, ...params) => {
+  if (type === "warn" && String(message).includes("Clock: This module has been deprecated")) return;
+  if (prevThreeConsole) {
+    prevThreeConsole(type, message, ...params);
+    return;
+  }
+  console[type](message, ...params);
+});
+
 const waveVertexShader = `
 precision highp float;
 varying vec2 vUv;
