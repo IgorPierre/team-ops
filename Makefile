@@ -25,7 +25,7 @@ dev: ## Start local Postgres and print next steps
 	@echo ""
 
 api-dev:
-	cd $(API_DIR) && go run ./cmd/server
+	set -a && test -f .env && . ./.env; set +a; cd $(API_DIR) && go run ./cmd/server
 
 build: api-build
 	npm run build
@@ -43,10 +43,10 @@ db-down:
 	$(COMPOSE_DEV) down
 
 db-migrate:
-	cd $(API_DIR) && go run ./cmd/migrate up
+	set -a && test -f .env && . ./.env; set +a; cd $(API_DIR) && go run ./cmd/migrate up
 
 db-seed:
-	cd $(API_DIR) && go run ./cmd/seed
+	set -a && test -f .env && . ./.env; set +a; cd $(API_DIR) && go run ./cmd/seed
 
 db-reset: db-down
 	$(COMPOSE_DEV) down -v

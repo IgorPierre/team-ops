@@ -22,6 +22,7 @@ type Config struct {
 }
 
 func Load() (Config, error) {
+	loadDotEnv()
 	cfg := Config{
 		HTTPAddr:         env("HTTP_ADDR", ":8080"),
 		DatabaseURL:      os.Getenv("DATABASE_URL"),
@@ -57,4 +58,39 @@ func envBool(key string, fallback bool) bool {
 		return fallback
 	}
 	return b
+}
+
+func loadDotEnv() {
+	for _, path := range []string{".env", "../.env", "../../.env"} {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			continue
+		}
+		for _, line := range strings.Split(string(data), "\n") {
+			line = strings.TrimSpace(line)
+			if line == "" || strings.HasPrefix(line, "#") {
+				continue
+			}
+			line = strings.TrimPrefix(line, "export ")
+			key, val, ok := strings.Cut(line, "=")
+			if !ok {
+				continue
+			}
+			key = strings.TrimSpace(key)
+			if key == "" {
+				continue
+			}
+			if os.Getenv(key) != "" {
+				continue
+			}
+			val = strings.TrimSpace(val)
+			if len(val) >= 2 {
+				if q := val[0]; (q == '"' || q == '\'') && val[len(val)-1] == q {
+					val = val[1 : len(val)-1]
+				}
+			}
+			_ = os.Setenv(key, val)
+		}
+		return
+	}
 }
