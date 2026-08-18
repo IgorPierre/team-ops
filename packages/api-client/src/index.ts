@@ -167,6 +167,33 @@ export interface ClientOptions {
   fetch?: typeof fetch;
 }
 
+function requestURL(
+  baseUrl: string,
+  path: string,
+  query?: Record<string, string | undefined>,
+): URL {
+  const prefix = baseUrl.replace(/\/$/, "");
+  const suffix = path.startsWith("/") ? path : `/${path}`;
+  const joined = `${prefix}${suffix}`;
+  const url = /^https?:\/\//i.test(joined)
+    ? new URL(joined)
+    : new URL(joined, defaultOrigin());
+  if (query) {
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined && value !== "") url.searchParams.set(key, value);
+    }
+  }
+  return url;
+}
+
+function defaultOrigin(): string {
+  const origin = globalThis.location?.origin;
+  if (typeof origin === "string" && origin !== "" && origin !== "null") {
+    return origin;
+  }
+  return "http://127.0.0.1";
+}
+
 export class TeamOpsClient {
   constructor(private readonly opts: ClientOptions) {}
 
@@ -176,14 +203,7 @@ export class TeamOpsClient {
     body?: unknown,
     query?: Record<string, string | undefined>,
   ): Promise<T> {
-    const url = new URL(
-      `${this.opts.baseUrl.replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`,
-    );
-    if (query) {
-      for (const [k, v] of Object.entries(query)) {
-        if (v !== undefined && v !== "") url.searchParams.set(k, v);
-      }
-    }
+    const url = requestURL(this.opts.baseUrl, path, query);
     const headers: Record<string, string> = { Accept: "application/json" };
     if (body !== undefined) headers["Content-Type"] = "application/json";
     if (this.opts.token) headers.Authorization = `Bearer ${this.opts.token}`;
