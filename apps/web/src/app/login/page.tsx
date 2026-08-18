@@ -1,17 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LogoMark } from "@/components/logo-mark";
 import { api } from "@/lib/api";
 import { TeamOpsError, type RegistrationMode } from "@team-ops/api-client";
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const params = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -22,10 +32,19 @@ export default function LoginPage() {
     void api.authConfig().then((c) => setMode(c.registration)).catch(() => setMode("invite_only"));
   }, []);
 
+  function nextPath() {
+    const next = params.get("next") ?? "/";
+    if (next.startsWith("/") && !next.startsWith("//")) return next;
+    return "/";
+  }
+
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-sm flex-col justify-center gap-6 px-4">
       <div>
-        <p className="text-sm font-medium tracking-wide uppercase">Team-Ops</p>
+        <p className="flex items-center gap-2 text-sm font-medium tracking-wide uppercase">
+          <LogoMark className="h-5" />
+          Team-Ops
+        </p>
         <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
       </div>
       <form
@@ -36,7 +55,7 @@ export default function LoginPage() {
           setError(null);
           try {
             await api.login({ email, password });
-            router.replace("/");
+            router.replace(nextPath());
           } catch (err) {
             setError(err instanceof TeamOpsError ? err.message : "Could not sign in");
           } finally {

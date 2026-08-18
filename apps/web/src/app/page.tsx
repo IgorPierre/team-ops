@@ -1,25 +1,22 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { MoonIcon, PlusIcon, SunIcon } from "lucide-react";
-import { useTheme } from "next-themes";
+import { MenuIcon, PlusIcon } from "lucide-react";
 
-import { BoardFilters, type BoardFilterState } from "@/components/board/board-filters";
+import { type BoardFilterState } from "@/components/board/board-filters";
 import { ProjectKanban } from "@/components/board/project-kanban";
 import { TaskForm } from "@/components/board/task-form";
-import { OrganizationSwitcher } from "@/components/layout/organization-switcher";
-import { ProjectSwitcher } from "@/components/layout/project-switcher";
+import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { TeamOpsError } from "@team-ops/api-client";
 
 export default function BoardPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { theme, setTheme } = useTheme();
   const [orgId, setOrgId] = useState<string>();
   const [projectId, setProjectId] = useState("");
   const [filters, setFilters] = useState<BoardFilterState>({
@@ -28,6 +25,7 @@ export default function BoardPage() {
     assigneeId: "",
   });
   const [formOpen, setFormOpen] = useState(false);
+  const [mobileNav, setMobileNav] = useState(false);
 
   const me = useQuery({
     queryKey: ["me"],
@@ -73,68 +71,78 @@ export default function BoardPage() {
     setFilters({ search: "", priority: "", assigneeId: "" });
   }
 
+  if (!me.isSuccess) {
+    return null;
+  }
+
+  const currentProject = projects.data?.find((project) => project.id === projectId);
+  const heading = currentProject?.name ?? "All projects";
+  const canCreate = orgs.data?.find((item) => item.id === orgId)?.role !== "viewer";
+
   return (
-    <div className="flex h-svh flex-col">
-      <header className="flex flex-wrap items-center gap-2 border-b px-4 py-2">
-        <Link href="/" className="pr-2 font-semibold tracking-tight">
-          Team-Ops
-        </Link>
-        <OrganizationSwitcher
+    <div className="bg-background flex h-svh overflow-x-clip">
+      {mobileNav ? (
+        <button
+          type="button"
+          className="fixed inset-0 z-30 bg-black/30 md:hidden"
+          aria-label="Close menu"
+          onClick={() => setMobileNav(false)}
+        />
+      ) : null}
+      <div
+        className={cn(
+          "fixed inset-y-0 left-0 z-40 h-full transition-transform md:static md:translate-x-0",
+          mobileNav ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+        )}
+      >
+        <AppSidebar
+          user={me.data}
           organizations={orgs.data ?? []}
-          value={orgId}
-          onChange={changeOrg}
-        />
-        <ProjectSwitcher
+          orgId={orgId}
+          onOrgChange={changeOrg}
           projects={projects.data ?? []}
-          value={projectId}
-          onChange={setProjectId}
+          projectId={projectId}
+          onProjectChange={setProjectId}
+          members={members.data ?? []}
+          filters={filters}
+          onFiltersChange={setFilters}
         />
-        <BoardFilters members={members.data ?? []} value={filters} onChange={setFilters} />
-        <div className="ml-auto flex items-center gap-2">
-          {orgs.data?.find((item) => item.id === orgId)?.role !== "viewer" ? (
-            <Button size="sm" onClick={() => setFormOpen(true)}>
-              <PlusIcon />
-              New task
-            </Button>
-          ) : null}
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex items-center gap-3 px-4 py-4 md:px-6">
           <Button
+            type="button"
+            variant="ghost"
             size="icon"
-            variant="ghost"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            aria-label="Toggle theme"
+            className="md:hidden"
+            aria-label="Open menu"
+            onClick={() => setMobileNav(true)}
           >
-            {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+            <MenuIcon />
           </Button>
-          <Link href="/settings/members" className="text-sm hover:underline">
-            People
-          </Link>
-          <Link href="/settings/agents" className="text-sm hover:underline">
-            Agents
-          </Link>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={async () => {
-              await api.logout();
-              router.replace("/login");
-            }}
-          >
-            {me.data?.name ?? "Account"}
-          </Button>
-        </div>
-      </header>
-      <main className="min-h-0 flex-1">
-        {orgId ? (
-          <ProjectKanban
-            organizationId={orgId}
-            projectId={projectId || undefined}
-            search={filters.search}
-            priority={filters.priority}
-            assigneeId={filters.assigneeId}
-            members={members.data ?? []}
-          />
-        ) : null}
-      </main>
+          <h1 className="min-w-0 truncate text-xl font-semibold tracking-tight">{heading}</h1>
+          {canCreate ? (
+            <Button size="sm" variant="ink" className="ml-auto" onClick={() => setFormOpen(true)}>
+              <PlusIcon />
+              Add Task
+            </Button>
+          ) : (
+            <div className="ml-auto" />
+          )}
+        </header>
+        <main className="min-h-0 flex-1">
+          {orgId ? (
+            <ProjectKanban
+              organizationId={orgId}
+              projectId={projectId || undefined}
+              search={filters.search}
+              priority={filters.priority}
+              assigneeId={filters.assigneeId}
+              members={members.data ?? []}
+            />
+          ) : null}
+        </main>
+      </div>
       {orgId ? (
         <TaskForm
           open={formOpen}

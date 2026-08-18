@@ -70,7 +70,12 @@ export function ProjectKanban({
       status: Task["status"];
       position: string;
       expectedVersion: number;
-    }) => api.moveTask(change.id, change),
+    }) =>
+      api.moveTask(change.id, {
+        status: change.status,
+        position: change.position,
+        expectedVersion: change.expectedVersion,
+      }),
   });
 
   async function handleBoardChange(
@@ -114,9 +119,13 @@ export function ProjectKanban({
 
   if (isLoading) {
     return (
-      <div className="text-muted-foreground grid auto-cols-[320px] grid-flow-col gap-4 overflow-x-auto p-4 text-sm">
+      <div className="flex h-full gap-6 overflow-x-auto px-6 pt-2 pb-4">
         {COLUMN_ORDER.map((id) => (
-          <div key={id} className="bg-muted/40 h-[70vh] animate-pulse rounded-lg" />
+          <div key={id} className="flex min-w-[20rem] flex-col gap-3">
+            <div className="bg-muted h-5 w-28 animate-pulse rounded-md" />
+            <div className="bg-card h-36 animate-pulse rounded-xl shadow-sm" />
+            <div className="bg-card h-28 animate-pulse rounded-xl shadow-sm" />
+          </div>
         ))}
       </div>
     );
@@ -125,6 +134,7 @@ export function ProjectKanban({
   return (
     <>
       <Kanban
+        className="h-full"
         value={columns}
         onValueChange={(value) => setColumns(value as BoardColumns)}
         getItemValue={(item) => item.id}
@@ -136,7 +146,7 @@ export function ProjectKanban({
           )
         }
       >
-        <KanbanBoard className="grid h-full auto-cols-[320px] grid-flow-col gap-4 overflow-x-auto p-4">
+        <KanbanBoard className="flex h-full gap-6 overflow-x-auto px-6 pt-2 pb-4">
           {COLUMN_ORDER.map((columnValue) => (
             <KanbanColumnView
               key={columnValue}

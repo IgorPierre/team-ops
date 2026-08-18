@@ -4,6 +4,7 @@ import type { Member } from "@team-ops/api-client";
 import { SearchIcon } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 
 export interface BoardFilterState {
   search: string;
@@ -21,18 +22,17 @@ export function BoardFilters({
   onChange: (next: BoardFilterState) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-col gap-2">
       <div className="relative">
-        <SearchIcon className="text-muted-foreground absolute top-2.5 left-2 size-4" />
+        <SearchIcon className="text-muted-foreground pointer-events-none absolute top-2.5 left-2.5 size-4" />
         <Input
-          className="w-56 pl-8"
+          className="bg-background pl-8"
           placeholder="Search tasks"
           value={value.search}
           onChange={(e) => onChange({ ...value, search: e.target.value })}
         />
       </div>
-      <select
-        className="border-input bg-background h-9 rounded-md border px-2 text-sm"
+      <Select
         value={value.priority}
         onChange={(e) => onChange({ ...value, priority: e.target.value })}
         aria-label="Priority"
@@ -41,9 +41,8 @@ export function BoardFilters({
         <option value="high">High</option>
         <option value="medium">Medium</option>
         <option value="low">Low</option>
-      </select>
-      <select
-        className="border-input bg-background h-9 rounded-md border px-2 text-sm"
+      </Select>
+      <Select
         value={value.assigneeId}
         onChange={(e) => onChange({ ...value, assigneeId: e.target.value })}
         aria-label="Assignee"
@@ -54,7 +53,7 @@ export function BoardFilters({
             {member.name}
           </option>
         ))}
-      </select>
+      </Select>
     </div>
   );
 }

@@ -1,40 +1,35 @@
 "use client";
 
 import type { Organization } from "@team-ops/api-client";
-import { ChevronDownIcon } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 
 export function OrganizationSwitcher({
   organizations,
   value,
   onChange,
+  className,
 }: {
   organizations: Organization[];
   value?: string;
   onChange: (id: string) => void;
+  className?: string;
 }) {
-  const current = organizations.find((org) => org.id === value);
   return (
-    <label className="relative">
-      <Button variant="ghost" className="max-w-48 justify-between" asChild>
-        <span>
-          <span className="truncate">{current?.name ?? "Organization"}</span>
-          <ChevronDownIcon />
-        </span>
-      </Button>
-      <select
-        className="absolute inset-0 cursor-pointer opacity-0"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        aria-label="Organization"
-      >
-        {organizations.map((org) => (
-          <option key={org.id} value={org.id}>
-            {org.name}
-          </option>
-        ))}
-      </select>
-    </label>
+    <Select
+      className={className}
+      value={value ?? ""}
+      onChange={(e) => {
+        if (e.target.value) onChange(e.target.value);
+      }}
+      aria-label="Organization"
+    >
+      {organizations.length === 0 ? <option value="">Organization</option> : null}
+      {organizations.map((org) => (
+        <option key={org.id} value={org.id}>
+          {org.name}
+        </option>
+      ))}
+    </Select>
   );
 }

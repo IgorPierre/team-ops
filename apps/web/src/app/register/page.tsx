@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LogoMark } from "@/components/logo-mark";
 import { api } from "@/lib/api";
 import { TeamOpsError, type InvitePreview, type RegistrationMode } from "@team-ops/api-client";
 
@@ -51,7 +52,10 @@ function RegisterForm() {
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-sm flex-col justify-center gap-6 px-4">
       <div>
-        <p className="text-sm font-medium tracking-wide uppercase">Team-Ops</p>
+        <p className="flex items-center gap-2 text-sm font-medium tracking-wide uppercase">
+          <LogoMark className="h-5" />
+          Team-Ops
+        </p>
         <h1 className="text-2xl font-semibold tracking-tight">
           {preview ? `Join ${preview.organizationName}` : "Create an account"}
         </h1>

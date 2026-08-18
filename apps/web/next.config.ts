@@ -6,6 +6,7 @@ const apiUrl = process.env.API_URL ?? "http://localhost:8080";
 const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: path.join(__dirname, "../.."),
+  devIndicators: false,
   async rewrites() {
     return [
       {
