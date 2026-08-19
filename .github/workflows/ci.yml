@@ -62,5 +62,10 @@ jobs:
           npm run lint -w @team-ops/mcp
           npm run test -w @team-ops/mcp
           npm run build -w @team-ops/mcp
+      - name: Setup CLI
+        run: |
+          npm run lint -w @team-ops/setup
+          npm run test -w @team-ops/setup
+          npm run build -w @team-ops/setup
       - name: Website
         run: npm run build -w @team-ops/website
