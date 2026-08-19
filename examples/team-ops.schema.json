@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/team-ops/team-ops/main/examples/team-ops.schema.json",
+  "title": "Team-Ops project config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["url", "autoUpdate"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "url": {
+      "type": "string",
+      "description": "Team-Ops API origin without /v1 suffix"
+    },
+    "organizationId": { "type": "string", "format": "uuid" },
+    "organizationName": { "type": "string" },
+    "projectId": { "type": "string", "format": "uuid" },
+    "projectKey": { "type": "string" },
+    "projectName": { "type": "string" },
+    "autoUpdate": {
+      "type": "boolean",
+      "description": "When true, the agent updates the board at each milestone"
+    }
+  }
+}
