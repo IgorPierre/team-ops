@@ -22,11 +22,17 @@
 
 .scroll-expand__stage {
   position: sticky;
-  top: 5.5rem;
+  top: calc(4rem + env(safe-area-inset-top, 0px));
   width: 100%;
   overflow: hidden;
   background: transparent;
   --se-title-size: 4rem;
+}
+
+@media (min-width: 1024px) {
+  .scroll-expand__stage {
+    top: calc(5.5rem + env(safe-area-inset-top, 0px));
+  }
 }
 
 .scroll-expand__frame {
@@ -110,6 +116,37 @@
 
 .scroll-expand__title span {
   white-space: nowrap;
+}
+
+@media (max-width: 639px) {
+  .scroll-expand__overlay {
+    padding: 3.5rem 4% 1.25rem;
+    gap: 0.875rem;
+  }
+
+  .scroll-expand__title {
+    padding: 0 4%;
+    line-height: 1.12;
+  }
+
+  .scroll-expand__title span {
+    white-space: normal;
+  }
+
+  .scroll-expand__hint {
+    bottom: 0.75rem;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 399px) {
+  .scroll-expand__stage {
+    top: calc(3.5rem + env(safe-area-inset-top, 0px));
+  }
+
+  .scroll-expand__overlay {
+    padding: 3rem 3.5% 1rem;
+  }
 }
 
 .scroll-expand__hint {

@@ -26,7 +26,7 @@ export function Card({
       {...props}
     >
       {background ? <div className="absolute inset-0 z-0">{background}</div> : null}
-      <div className={cn("relative z-10 flex h-full min-h-[210px] flex-col p-6 lg:p-8", contentClassName)}>
+      <div className={cn("relative z-10 flex h-full min-h-[210px] flex-col p-4 sm:p-6 lg:p-8", contentClassName)}>
         {children}
       </div>
     </article>
@@ -36,7 +36,7 @@ export function Card({
 export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
-      className={cn(heading, "text-[1.85rem] sm:text-[2.1rem]", className)}
+      className={cn(heading, "text-[1.25rem] sm:text-[1.85rem] lg:text-[2.1rem]", className)}
       {...props}
     />
   );
@@ -45,7 +45,7 @@ export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingEle
 export function CardBody({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("mt-4 max-w-[46ch] text-[1.175rem] leading-relaxed", className)}
+      className={cn("mt-3 max-w-[46ch] text-[clamp(1rem,2.5vw,1.175rem)] leading-relaxed sm:mt-4", className)}
       {...props}
     />
   );

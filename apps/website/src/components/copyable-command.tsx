@@ -40,11 +40,11 @@ export function CopyableCommand({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-xl border border-rule bg-paper-2 py-1.5 pr-1.5 pl-4 font-mono text-base text-muted shadow-sm",
+        "flex items-center gap-1.5 rounded-xl border border-rule bg-paper-2 py-1 pr-1 pl-3 font-mono text-sm text-muted shadow-sm sm:gap-2 sm:rounded-xl sm:py-1.5 sm:pr-1.5 sm:pl-4 sm:text-base",
         className,
       )}
     >
-      <code className="min-w-0 flex-1 truncate">{command}</code>
+      <code className="min-w-0 flex-1 break-all text-sm sm:truncate sm:text-base">{command}</code>
       <span
         aria-hidden="true"
         className={cn(
@@ -61,7 +61,7 @@ export function CopyableCommand({
         aria-label={copied ? copiedAria : copyAria}
         title={copied ? copiedLabel : copyLabel}
         className={cn(
-          "inline-flex shrink-0 items-center justify-center rounded-md p-1.5 text-muted transition-colors",
+          "inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md p-2 text-muted transition-colors",
           "hover:bg-paper-3 hover:text-ink",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
         )}

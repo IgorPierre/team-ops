@@ -1,5 +1,6 @@
 "use client";
 
+import { MenuIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { LogoMark } from "@/components/logo-mark";
@@ -39,7 +40,7 @@ export function SiteNav() {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = open ? "clip" : "";
+    document.body.style.overflow = open ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
@@ -48,14 +49,14 @@ export function SiteNav() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 border-b",
+        "sticky top-0 z-50 border-b pt-[env(safe-area-inset-top,0px)]",
         scrolled ? "border-rule bg-paper/80 backdrop-blur-lg backdrop-saturate-150" : "border-transparent bg-transparent",
       )}
     >
-      <div className={cn(wrap, "grid min-h-16 grid-cols-[1fr_auto] items-center gap-4 lg:grid-cols-[1fr_auto_1fr]")}>
-        <a className="inline-flex items-center gap-2 whitespace-nowrap font-display text-[1.15rem] text-ink" href="#top">
+      <div className={cn(wrap, "grid min-h-14 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:min-h-16 sm:gap-3 lg:grid-cols-[1fr_auto_1fr] lg:gap-4")}>
+        <a className="inline-flex min-w-0 items-center gap-1.5 font-display text-[1rem] text-ink sm:gap-2 sm:text-[1.15rem]" href="#top">
           <LogoMark />
-          Team-Ops
+          <span className="truncate">Team-Ops</span>
         </a>
         <nav className="hidden justify-self-center gap-1 lg:flex" aria-label={t.nav.primary}>
           {links.map((link) => (
@@ -71,41 +72,52 @@ export function SiteNav() {
             </a>
           ))}
         </nav>
-        <div className="flex items-center justify-self-end gap-2">
+        <div className="flex min-w-0 items-center justify-self-end gap-2">
           <LocaleSwitcher className="hidden sm:flex" />
-          <ThemeToggle />
-          <Button variant="text" href={GITHUB}>
+          <ThemeToggle className="hidden lg:inline-flex" />
+          <Button variant="text" href={GITHUB} className="hidden lg:inline-flex">
             {t.nav.source}
           </Button>
-          <Button variant="accent" href={GITHUB}>
+          <Button variant="accent" href={GITHUB} className="hidden lg:inline-flex">
             {t.nav.runIt}
           </Button>
           <button
             type="button"
             className={cn(
-              "rounded-full border border-rule bg-paper px-3 py-2 text-[0.85rem] text-ink lg:hidden",
+              "inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-rule bg-paper text-ink lg:hidden",
               focusRing,
             )}
             aria-expanded={open}
             aria-controls="mobile-nav"
+            aria-label={t.nav.menu}
             onClick={() => setOpen((v) => !v)}
           >
-            {t.nav.menu}
+            {open ? <XIcon className="size-5" aria-hidden="true" /> : <MenuIcon className="size-5" aria-hidden="true" />}
+            <span className="sr-only">{t.nav.menu}</span>
           </button>
         </div>
       </div>
       {open ? (
         <nav
           id="mobile-nav"
-          className="grid gap-3 border-b border-rule bg-paper px-[clamp(24px,4vw,64px)] py-3 pb-6 lg:hidden"
+          className="grid gap-2 border-b border-rule bg-paper px-[clamp(16px,4vw,64px)] py-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] lg:hidden"
           aria-label={t.nav.mobile}
         >
           {links.map((link) => (
-            <a key={link.href} className="py-3" href={link.href} onClick={() => setOpen(false)}>
+            <a
+              key={link.href}
+              className={cn("inline-flex min-h-11 items-center py-2", focusRing)}
+              href={link.href}
+              onClick={() => setOpen(false)}
+            >
               {link.label}
             </a>
           ))}
-          <a href={GITHUB} onClick={() => setOpen(false)}>
+          <a
+            href={GITHUB}
+            className={cn("inline-flex min-h-11 items-center py-2", focusRing)}
+            onClick={() => setOpen(false)}
+          >
             {t.nav.viewSource}
           </a>
           <LocaleSwitcher />

@@ -5,7 +5,7 @@ import { wrap } from "@/lib/styles";
 
 function LogoRow({ hidden }: { hidden?: boolean }) {
   return (
-    <div className="flex shrink-0 items-center gap-x-16 px-10 sm:gap-x-24" aria-hidden={hidden || undefined}>
+    <div className="flex shrink-0 items-center gap-x-10 px-6 sm:gap-x-16 sm:px-10 lg:gap-x-24" aria-hidden={hidden || undefined}>
       {CLIS.map((agent) => (
         <div key={agent.name} className="flex items-center gap-4 opacity-55 dark:opacity-70">
           <Image
@@ -15,7 +15,7 @@ function LogoRow({ hidden }: { hidden?: boolean }) {
             height={48}
             className="size-12 brightness-0 dark:invert"
           />
-          <span className="font-brand text-[1.45rem] font-semibold tracking-tight text-ink whitespace-nowrap">
+          <span className="font-brand text-[1.15rem] font-semibold tracking-tight text-ink whitespace-nowrap sm:text-[1.45rem]">
             {agent.name}
           </span>
         </div>
@@ -26,10 +26,10 @@ function LogoRow({ hidden }: { hidden?: boolean }) {
 
 export function AgentCloud({ eyebrow }: { eyebrow: string }) {
   return (
-    <section className="bg-paper py-24 sm:py-32">
+    <section className="bg-paper py-12 sm:py-24 lg:py-32">
       <div className={wrap}>
-        <p className="text-center text-[1.05rem] tracking-[0.04em] text-muted">{eyebrow}</p>
-        <div className="relative mt-12 overflow-hidden">
+        <p className="text-center text-[0.9375rem] tracking-[0.04em] text-muted sm:text-[1.05rem]">{eyebrow}</p>
+        <div className="relative mt-8 overflow-hidden sm:mt-12">
           <div className="flex w-max will-change-transform animate-logo-marquee motion-reduce:animate-none">
             <LogoRow />
             <LogoRow hidden />

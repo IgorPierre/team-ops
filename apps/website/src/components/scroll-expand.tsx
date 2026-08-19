@@ -129,8 +129,13 @@ export function ScrollExpand({
 
     const e = smoothstep(0, 1, p);
 
-    const w = c.startWidth + (100 - c.startWidth) * e;
-    const h = c.startHeight + (100 - c.startHeight) * e;
+    const rootW = rootRef.current?.clientWidth || frame.parentElement?.clientWidth || 800;
+    const narrow = rootW < 400;
+    const startW = narrow ? Math.min(c.startWidth, 28) : c.startWidth;
+    const startH = narrow ? Math.min(c.startHeight, 50) : c.startHeight;
+
+    const w = startW + (100 - startW) * e;
+    const h = startH + (100 - startH) * e;
     const ix = Math.max(0, (100 - w) / 2);
     const iy = Math.max(0, (100 - h) / 2);
     const r = c.startRadius + (c.endRadius - c.startRadius) * e;
@@ -143,13 +148,16 @@ export function ScrollExpand({
     if (titleRef.current) {
       const toRow = smoothstep(0.28, 0.78, p);
       const el = titleRef.current;
-      el.style.flexDirection = toRow > 0.45 ? "row" : "column";
-      el.style.gap = `${0.4 * toRow}em`;
-      const stacked = Number.parseFloat(getComputedStyle(el).getPropertyValue("--se-title-size")) || 64;
       const stageW = el.parentElement?.clientWidth || 800;
+      const narrow = stageW < 400;
+      el.style.flexDirection = narrow || toRow <= 0.45 ? "column" : "row";
+      el.style.gap = narrow ? "0.15em" : `${0.4 * toRow}em`;
+      const stacked = Number.parseFloat(getComputedStyle(el).getPropertyValue("--se-title-size")) || 64;
       const beside = clamp(stageW * 0.042, 28, 52);
-      el.style.fontSize = `${stacked + (beside - stacked) * toRow}px`;
-      el.style.transform = `translate3d(0, ${-48 * toRow}px, 0)`;
+      const rowBlend = narrow ? 0 : toRow;
+      el.style.fontSize = `${stacked + (beside - stacked) * rowBlend}px`;
+      el.style.transform = narrow ? "none" : `translate3d(0, ${-48 * toRow}px, 0)`;
+      el.style.lineHeight = narrow ? "1.12" : "1.02";
     }
 
     if (hintRef.current) {
@@ -179,16 +187,34 @@ export function ScrollExpand({
     let stageH = 0;
     let running = false;
 
+    const resolveStageHeight = (c: LiveProps) => {
+      if (c.stageHeight == null) {
+        return c.useWindowScroll ? window.innerHeight : root.clientHeight;
+      }
+      const w = root.clientWidth || window.innerWidth;
+      if (w < 400) {
+        return Math.round(Math.min(c.stageHeight, Math.max(280, window.innerHeight * 0.62)));
+      }
+      if (w < 640) {
+        return Math.round(Math.min(c.stageHeight, Math.max(320, window.innerHeight * 0.55)));
+      }
+      if (w < 1024) {
+        return Math.min(c.stageHeight, 400);
+      }
+      return c.stageHeight;
+    };
+
     const measure = () => {
       const c = propsRef.current;
-      stageH = c.stageHeight ?? (c.useWindowScroll ? window.innerHeight : root.clientHeight);
+      stageH = resolveStageHeight(c);
       if (stageH <= 0) return;
       stage.style.height = `${stageH}px`;
       const expand = reduceMotion || !c.enabled ? 0 : Math.max(0, c.scrollDistance) + Math.max(0, c.holdDistance);
       track.style.height = `${stageH * (1 + expand)}px`;
 
       const w = root.clientWidth || stageH;
-      stage.style.setProperty("--se-title-size", `${clamp(w * 0.075, 20, 84)}px`);
+      const titleSize = w < 400 ? clamp(w * 0.1, 26, 84) : clamp(w * 0.075, 20, 84);
+      stage.style.setProperty("--se-title-size", `${titleSize}px`);
     };
 
     const readProgress = () => {

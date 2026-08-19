@@ -25,7 +25,7 @@ export function Button({ variant = "accent", className, ...props }: ButtonProps)
   return (
     <a
       className={cn(
-        "inline-flex w-fit items-center justify-center whitespace-nowrap rounded-full border border-transparent px-6 py-2 text-[16px] font-medium",
+        "inline-flex w-fit min-h-11 items-center justify-center whitespace-nowrap rounded-full border border-transparent px-6 py-2.5 text-[16px] font-medium",
         "transition duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]",
         "focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-focus",
         "motion-reduce:transition-none motion-reduce:hover:translate-y-0",

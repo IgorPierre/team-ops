@@ -24,7 +24,7 @@ export function LocaleSwitcher({ className }: { className?: string }) {
               document.cookie = `${LOCALE_COOKIE}=${code}; path=/; max-age=31536000; SameSite=Lax`;
             }}
             className={cn(
-              "rounded-full px-2 py-1 text-[0.8rem] tracking-[0.04em]",
+              "inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-3 py-2 text-[0.8rem] tracking-[0.04em]",
               active ? "text-ink" : "text-muted hover:text-ink",
               focusRing,
             )}

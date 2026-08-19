@@ -13,18 +13,18 @@ import { sectionHead, sectionLead, sectionTitle, wrap } from "@/lib/styles";
 
 export function FeatureCards({ copy }: { copy: Messages["features"] }) {
   return (
-    <section className={`${wrap} py-16`} id="features">
+    <section className={`${wrap} py-10 sm:py-16`} id="features">
       <Reveal>
         <div className={sectionHead}>
           <h2 className={sectionTitle}>{copy.title}</h2>
           <p className={sectionLead}>{copy.lead}</p>
         </div>
       </Reveal>
-      <RevealGroup className="grid min-w-0 gap-6 sm:grid-cols-2">
+      <RevealGroup className="grid min-w-0 gap-4 sm:grid-cols-2 sm:gap-6">
         <RevealItem className="h-full min-w-0">
           <Card
-            className="h-full min-h-[300px] rounded-2xl bg-origin-border shadow-lg"
-            contentClassName="min-h-[300px]"
+            className="h-full min-h-[240px] rounded-2xl bg-origin-border shadow-lg sm:min-h-[300px]"
+            contentClassName="min-h-[240px] sm:min-h-[300px]"
             background={<AgnosticBackground />}
           >
             <CardTitle>{copy.aTitle}</CardTitle>
@@ -79,8 +79,8 @@ export function FeatureCards({ copy }: { copy: Messages["features"] }) {
 
         <RevealItem className="h-full min-w-0">
           <Card
-            className="h-full min-h-[300px] rounded-2xl bg-origin-border shadow-lg"
-            contentClassName="min-h-[300px]"
+            className="h-full min-h-[240px] rounded-2xl bg-origin-border shadow-lg sm:min-h-[300px]"
+            contentClassName="min-h-[240px] sm:min-h-[300px]"
             background={<MagnetLinesBackground />}
           >
             <CardTitle>{copy.dTitle}</CardTitle>

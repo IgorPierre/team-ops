@@ -29,7 +29,7 @@ export function ThemeToggle({ className }: { className?: string }) {
     <button
       type="button"
       className={cn(
-        "inline-flex items-center rounded-full border border-rule bg-paper p-0.5",
+        "inline-flex min-h-11 min-w-[4.5rem] items-center justify-center rounded-full border border-rule bg-paper p-0.5",
         focusRing,
         className,
       )}

@@ -47,7 +47,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           }}
           aria-hidden="true"
         />
-        <div className="mx-auto w-full max-w-page">{children}</div>
+        <div className="mx-auto w-full min-w-0 max-w-page">{children}</div>
       </body>
     </html>
   );
