@@ -13,11 +13,36 @@ TEAM_OPS_TOKEN=tops_sk_xxxxx
 
 `TEAM_OPS_URL` is the API origin with no `/v1` suffix.
 
-## Config snippets
+## Quick install
+
+In the repo you are coding in:
+
+```bash
+npx @team-ops/setup
+```
+
+This installs MCP config **and** the Team-Ops skill. Restart your agent.
+
+## Config snippets (manual)
 
 - Cursor: [examples/mcp/cursor.json](../../examples/mcp/cursor.json) → `.cursor/mcp.json`
 - Claude Code: [examples/mcp/claude.json](../../examples/mcp/claude.json) → `.mcp.json`
 - VS Code / Copilot: [examples/mcp/vscode.json](../../examples/mcp/vscode.json) → `.vscode/mcp.json`
+
+```json
+{
+  "mcpServers": {
+    "team-ops": {
+      "command": "npx",
+      "args": ["-y", "@team-ops/mcp"],
+      "env": {
+        "TEAM_OPS_URL": "http://localhost:8080",
+        "TEAM_OPS_TOKEN": "tops_sk_..."
+      }
+    }
+  }
+}
+```
 
 ## From this repository
 
@@ -43,5 +68,9 @@ progress require `expected_version`.
 
 ## Skill
 
-Ship [skills/team-ops/SKILL.md](../../skills/team-ops/SKILL.md) with the
-agent so it updates the board without being asked every time.
+Install with `@team-ops/setup`, or ship
+[skills/team-ops/SKILL.md](../../skills/team-ops/SKILL.md) manually so the
+agent updates the board without being asked every time.
+
+Project defaults live in `.team-ops.json` — see
+[examples/team-ops.json](../../examples/team-ops.json).

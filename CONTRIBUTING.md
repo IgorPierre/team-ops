@@ -30,6 +30,7 @@ make build
 - `apps/api` — Go HTTP API
 - `apps/web` — Next.js board
 - `apps/mcp` — MCP adapter (no business rules)
+- `apps/setup` — skill + MCP installer CLI
 - `apps/website` — public landing
 - `db` — Goose migrations + sqlc queries
 - `openapi/openapi.yaml` — API contract
@@ -37,5 +38,6 @@ make build
 Pull requests should stay small. Match the existing style. Do not add
 message buses, custom workflow engines, or extra column types in V1.
 
-The product loop is: run the board → issue an agent key → MCP + skill in
-the coding agent → the Kanban stays current. See `docs/getting-started`.
+The product loop is: run the board → issue an agent key →
+`npx @team-ops/setup` in the coding repo → the Kanban stays current.
+See `docs/getting-started`.
