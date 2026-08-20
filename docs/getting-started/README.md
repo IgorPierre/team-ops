@@ -8,7 +8,7 @@ the skill — then the agent keeps the Kanban current.
 On a laptop or a VPS:
 
 ```bash
-git clone https://github.com/team-ops/team-ops
+git clone https://github.com/IgorPierre/team-ops
 cd team-ops
 cp .env.example .env
 docker compose up -d

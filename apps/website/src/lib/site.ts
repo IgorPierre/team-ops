@@ -1,4 +1,4 @@
-export const GITHUB = "https://github.com/team-ops/team-ops";
+export const GITHUB = "https://github.com/IgorPierre/team-ops";
 
 /** Accent used by shaders that need a hex or 0–1 RGB triple. */
 export const ACCENT_HEX = "#10b981";

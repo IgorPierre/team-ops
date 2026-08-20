@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/team-ops/team-ops",
+    "url": "https://github.com/IgorPierre/team-ops",
     "directory": "apps/setup"
   },
   "engines": {
