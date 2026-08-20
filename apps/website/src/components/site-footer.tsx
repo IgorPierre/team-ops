@@ -21,11 +21,11 @@ export function SiteFooter({ navLabel }: { navLabel: string }) {
 
   return (
     <footer className="border-t border-rule">
-      <div className={cn(wrap, "py-12 md:flex md:items-center md:justify-between")}>
+      <div className={cn(wrap, "py-12 pb-[max(3rem,env(safe-area-inset-bottom))] md:flex md:items-center md:justify-between")}>
         <nav className="flex justify-center gap-x-6 md:order-2" aria-label={navLabel}>
           <a
             href={GITHUB}
-            className={cn("text-muted hover:text-ink", focusRing)}
+            className={cn("inline-flex min-h-11 min-w-11 items-center justify-center text-muted hover:text-ink", focusRing)}
             rel="noreferrer"
           >
             <span className="sr-only">GitHub</span>

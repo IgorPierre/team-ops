@@ -5,6 +5,8 @@ SHELL := /bin/bash
 	api-test api-vet api-build \
 	web-lint web-typecheck web-test web-build \
 	mcp-lint mcp-test mcp-build \
+	setup-lint setup-test setup-build \
+	smoke-test \
 	docker-build docker-up docker-down
 
 COMPOSE := docker compose
@@ -89,6 +91,18 @@ mcp-test:
 
 mcp-build:
 	npm run build -w @team-ops/mcp
+
+setup-lint:
+	npm run lint -w @team-ops/setup
+
+setup-test:
+	npm run test -w @team-ops/setup
+
+setup-build:
+	npm run build -w @team-ops/setup
+
+smoke-test:
+	bash scripts/smoke-test.sh
 
 docker-build:
 	$(COMPOSE) build

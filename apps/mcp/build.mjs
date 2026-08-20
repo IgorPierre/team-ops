@@ -7,5 +7,8 @@ await esbuild.build({
   format: "esm",
   outfile: "dist/index.js",
   external: ["@modelcontextprotocol/sdk", "zod"],
+  banner: {
+    js: "#!/usr/bin/env node",
+  },
   logLevel: "info",
 });

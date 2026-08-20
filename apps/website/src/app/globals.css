@@ -118,9 +118,11 @@ html[data-preloading] body {
     background: var(--color-paper);
     color: var(--color-ink-2);
     font-family: var(--font-sans);
-    font-size: 1.125rem;
+    font-size: clamp(1rem, 0.5vw + 0.95rem, 1.125rem);
     font-weight: 400;
     line-height: 1.6;
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
   }
 
   a {

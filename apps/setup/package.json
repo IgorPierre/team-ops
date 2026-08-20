@@ -1,11 +1,11 @@
 {
-  "name": "@team-ops/mcp",
+  "name": "@team-ops/setup",
   "version": "0.1.0",
-  "description": "MCP server for Team-Ops. A thin adapter over the Team-Ops HTTP API.",
+  "description": "Install the Team-Ops skill and MCP config for Cursor, Claude Code, or VS Code.",
   "license": "MIT",
   "type": "module",
   "bin": {
-    "team-ops-mcp": "./dist/index.js"
+    "team-ops-setup": "./dist/index.js"
   },
   "files": ["dist"],
   "publishConfig": {
@@ -14,7 +14,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/team-ops/team-ops",
-    "directory": "apps/mcp"
+    "directory": "apps/setup"
   },
   "engines": {
     "node": ">=20"
@@ -27,12 +27,7 @@
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.1",
-    "zod": "^3.25.28"
-  },
   "devDependencies": {
-    "@team-ops/api-client": "*",
     "@types/node": "^22.15.18",
     "esbuild": "^0.25.8",
     "tsx": "^4.19.4",

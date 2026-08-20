@@ -98,9 +98,12 @@ function CreateAppAnimation({
   return (
     <div {...props}>
       {tick > timeWindowOpen && (
-        <PipelineReadyWindow status={status} className="absolute right-4 bottom-5 z-10 animate-terminal-popup" />
+        <PipelineReadyWindow
+          status={status}
+          className="absolute inset-x-4 bottom-5 z-10 max-w-[calc(100%-2rem)] animate-terminal-popup sm:inset-x-auto sm:right-4 sm:max-w-[220px]"
+        />
       )}
-      <pre className="min-h-[240px] font-mono text-sm break-all whitespace-pre-wrap">
+      <pre className="min-h-[180px] font-mono text-xs break-all whitespace-pre-wrap sm:min-h-[240px] sm:text-sm">
         <code className="grid">{lines}</code>
       </pre>
     </div>
@@ -111,7 +114,7 @@ export function AgentsDemo() {
   const { t } = useI18n();
 
   return (
-    <div className="relative flex min-h-[520px] flex-col items-center justify-center gap-6 overflow-hidden rounded-2xl p-6 md:p-10 lg:min-h-[560px] lg:gap-8">
+    <div className="relative flex min-h-[360px] flex-col items-center justify-center gap-4 overflow-hidden rounded-xl p-3 sm:min-h-[520px] sm:gap-6 sm:rounded-2xl sm:p-6 md:p-10 lg:min-h-[560px] lg:gap-8">
       <div className="absolute inset-0 -z-[1]">
         <LetterGlitch
           glitchSpeed={50}
@@ -123,9 +126,9 @@ export function AgentsDemo() {
         <div className="absolute inset-0 bg-black/35" aria-hidden />
       </div>
 
-      <div className="w-full max-w-6xl rounded-2xl border border-rule bg-paper p-2 text-ink shadow-lg">
+      <div className="w-full max-w-6xl rounded-xl border border-rule bg-paper p-2 text-ink shadow-lg sm:rounded-2xl">
         <div className="flex flex-col gap-2 sm:flex-row">
-          <span className="self-start rounded-xl border-2 border-accent/50 px-2 py-1 text-center font-mono text-sm font-bold text-accent uppercase sm:content-center sm:self-auto sm:py-0">
+          <span className="self-start rounded-lg border-2 border-accent/50 px-2 py-1 text-center font-mono text-xs font-bold text-accent uppercase sm:rounded-xl sm:text-sm sm:content-center sm:self-auto sm:py-0">
             {t.agents.tryItOut}
           </span>
           <CopyableCommand
@@ -137,7 +140,7 @@ export function AgentsDemo() {
             copiedAria={t.agents.copiedAria}
           />
         </div>
-        <p className="mt-2 px-1 text-[0.95rem] leading-relaxed text-muted">
+        <p className="mt-2 px-1 text-[0.875rem] leading-relaxed text-muted sm:text-[0.95rem]">
           <InlineMarkup text={t.agents.needs} />{" "}
           <a href={GITHUB} className="text-ink underline underline-offset-2">
             {t.agents.runStackFirst}
@@ -154,7 +157,7 @@ export function AgentsDemo() {
         </div>
       </div>
 
-      <div className="w-full max-w-6xl rounded-2xl border border-rule bg-paper p-5 text-[1.125rem] leading-relaxed text-ink-2 lg:p-6">
+      <div className="w-full max-w-6xl rounded-xl border border-rule bg-paper p-4 text-[1rem] leading-relaxed text-ink-2 sm:rounded-2xl sm:p-5 sm:text-[1.125rem] lg:p-6">
         <p>{t.agents.caption}</p>
       </div>
     </div>

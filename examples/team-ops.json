@@ -1,0 +1,10 @@
+{
+  "$schema": "./team-ops.schema.json",
+  "url": "http://localhost:8080",
+  "organizationId": "00000000-0000-0000-0000-000000000001",
+  "organizationName": "Northwind Labs",
+  "projectId": "00000000-0000-0000-0000-000000000002",
+  "projectKey": "ERP",
+  "projectName": "ERP",
+  "autoUpdate": true
+}

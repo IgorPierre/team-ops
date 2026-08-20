@@ -1,7 +1,7 @@
 # Getting started
 
-Team-Ops is three steps: run the board, give your coding agent a key, let it
-keep the Kanban current.
+Team-Ops is three steps: run the board, give your coding agent a key, install
+the skill — then the agent keeps the Kanban current.
 
 ## 1. Run the board
 
@@ -22,6 +22,8 @@ the role you picked (`admin`, `developer`, or `viewer`).
 Agents never sign up. They only reach the board with a `tops_sk_…` key that
 an admin issues.
 
+The onboarding wizard creates your first organization and project.
+
 Optional sample boards from a dev checkout: `make db-seed`. Seeded logins
 are `alex@example.com` / `password123`. Set `REGISTRATION_OPEN=true` only
 if you want anyone who can reach the URL to create their own account.
@@ -30,60 +32,58 @@ External Postgres: [deployment](../deployment/external-postgres.md).
 
 ## 2. Issue an agent key
 
-In the web app: **Agents** → create an agent → copy the `tops_sk_…` secret.
-It is shown once.
+In the web app: **Settings → Agents** → create an agent → copy the `tops_sk_…`
+secret. It is shown once.
 
-## 3. Point the coding agent at Team-Ops
+## 3. Install skill + MCP (recommended)
 
-The MCP process runs **on the machine where the agent runs** (your laptop).
-It calls the HTTP API. It never talks to PostgreSQL.
+In the **repo where you code** (not necessarily the Team-Ops repo):
 
-### MCP
-
-Copy [examples/mcp/cursor.json](../../examples/mcp/cursor.json) into
-`.cursor/mcp.json` (Cursor), `.mcp.json` (Claude Code), or
-`.vscode/mcp.json` (GitHub Copilot). Set:
-
-- `TEAM_OPS_URL` — API origin, no `/v1`. Local Docker: `http://localhost:8080`. Remote: `https://teamops.example.com`.
-- `TEAM_OPS_TOKEN` — the `tops_sk_…` key.
-
-```json
-{
-  "mcpServers": {
-    "team-ops": {
-      "command": "npx",
-      "args": ["-y", "@team-ops/mcp"],
-      "env": {
-        "TEAM_OPS_URL": "http://localhost:8080",
-        "TEAM_OPS_TOKEN": "tops_sk_..."
-      }
-    }
-  }
-}
+```bash
+npx @team-ops/setup
 ```
+
+The CLI will:
+
+- install the Team-Ops skill for your editor (Cursor / Claude Code / VS Code)
+- merge MCP config with `TEAM_OPS_URL` and `TEAM_OPS_TOKEN`
+- write `.team-ops.json` with your default org/project ids
+
+Restart your coding agent so it reloads MCP and skills.
+
+### Options
+
+```bash
+# Non-interactive
+TEAM_OPS_URL=http://localhost:8080 TEAM_OPS_TOKEN=tops_sk_... npx @team-ops/setup -y
+
+# Global install (all projects)
+npx @team-ops/setup --global
+
+# Verify connection only
+npx @team-ops/setup --check --url http://localhost:8080 --token tops_sk_...
+```
+
+### Manual install
+
+See [MCP](../mcp/README.md) for hand-edited config and
+[skills/team-ops/SKILL.md](../../skills/team-ops/SKILL.md) if you prefer to
+copy the skill yourself.
 
 From this clone, without npm publish:
 
 ```bash
 npm install
 npm run build -w @team-ops/mcp
+npm run build -w @team-ops/setup
+node apps/setup/dist/index.js --yes --token tops_sk_...
 ```
-
-Then use `"command": "node"` and
-`"args": ["/absolute/path/to/team-ops/apps/mcp/dist/index.js"]`.
-
-### Skill
-
-Copy [skills/team-ops/SKILL.md](../../skills/team-ops/SKILL.md) into the repo
-you are coding in:
-
-- Cursor: `.cursor/skills/team-ops/SKILL.md`
-- Claude Code: `.claude/skills/team-ops/SKILL.md`
-
-Or install it once for all projects: `~/.cursor/skills/team-ops/SKILL.md`.
 
 ## 4. Use it
 
 Ask the agent to pick up a card. It should move the task to In Progress,
 write progress as it works, and complete the card when the change is done.
 The rest of the team sees that on the board — no extra tool.
+
+With `autoUpdate: true` in `.team-ops.json`, the skill tells the agent to
+update the board at each milestone without being asked every time.

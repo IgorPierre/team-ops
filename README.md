@@ -27,45 +27,44 @@ docker compose up -d
 ```
 
 Open http://localhost:3000. The first account owns the instance; later
-people join with an invite from **People**. Demo data (optional):
+people join with an invite from **People**.
+
+Connect an agent (3 steps)
+--------------------------
+
+1. In the web app: **Settings → Agents** → create an agent → copy the
+   `tops_sk_…` secret (shown once).
+
+2. In the repo you are coding in, install the skill + MCP config:
 
 ```bash
-# From a dev checkout:
-make db-up db-migrate db-seed
+npx @team-ops/setup
 ```
 
-Seed login after `make db-seed`: `alex@example.com` / `password123`
+3. Restart your coding agent (Cursor, Claude Code, etc.).
 
-Connect an agent
-----------------
+Ask the agent to pick up a backlog card or create one for your branch. The
+board updates as it works.
 
-1. In the web app, open **Agents** and create an agent + API key (`tops_sk_…`).
-2. Point MCP at your instance (Cursor `.cursor/mcp.json`):
+One-liner check:
 
-```json
-{
-  "mcpServers": {
-    "team-ops": {
-      "command": "npx",
-      "args": ["-y", "@team-ops/mcp"],
-      "env": {
-        "TEAM_OPS_URL": "http://localhost:8080",
-        "TEAM_OPS_TOKEN": "tops_sk_..."
-      }
-    }
-  }
-}
+```bash
+npx @team-ops/setup --check --url http://localhost:8080 --token tops_sk_...
 ```
 
-3. Copy [`skills/team-ops/SKILL.md`](skills/team-ops/SKILL.md) into
-   `.cursor/skills/team-ops/` of the repo you are coding in (or
-   `~/.cursor/skills/team-ops/`).
+Demo data (optional)
+--------------------
 
-Ask the agent to pick up a task. Watch the board move.
+```bash
+make db-seed
+```
 
-Snippets for Claude Code and Copilot: [docs/mcp](docs/mcp/README.md).
-From this clone, without npm: `npm run build -w @team-ops/mcp` then run
-`node apps/mcp/dist/index.js`.
+Seed login: `alex@example.com` / `password123` (Northwind Labs → ERP).
+
+Manual MCP config
+-----------------
+
+If you prefer not to use the setup CLI, see [docs/mcp](docs/mcp/README.md).
 
 External PostgreSQL
 -------------------
@@ -86,6 +85,14 @@ Docs
 - [MCP](docs/mcp/README.md)
 - [Deployment](docs/deployment/README.md)
 - [Security](docs/security/README.md)
+- [Publishing npm packages](docs/publishing/README.md) (maintainers)
+
+Verify before release
+---------------------
+
+```bash
+make smoke-test
+```
 
 License
 -------

@@ -8,6 +8,7 @@
     "apps/web",
     "apps/website",
     "apps/mcp",
+    "apps/setup",
     "packages/api-client"
   ],
   "scripts": {

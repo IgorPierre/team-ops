@@ -52,4 +52,8 @@ jobs:
         working-directory: apps/mcp
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        continue-on-error: true
+      - run: npm run build -w @team-ops/setup
+      - run: npm publish --access public
+        working-directory: apps/setup
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
