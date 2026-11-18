@@ -15,6 +15,7 @@ export const STATUS_DISPLAY: Record<TaskStatus, { label: string; color: BadgeCol
   in_progress: { label: "In progress", color: "blue" },
   review: { label: "In review", color: "yellow" },
   done: { label: "Done", color: "success" },
+  production: { label: "Production", color: "success" },
 };
 
 export const ROLE_DISPLAY: Record<Role, { label: string; color: BadgeColor; description: string }> = {

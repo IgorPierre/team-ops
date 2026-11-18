@@ -62,7 +62,7 @@ func checkProof(p *proofInput) (kind, link *string, err error) {
 // requireProof refuses moving a task into done without evidence, unless
 // it already carries some (a reopened task keeps its last proof).
 func requireProof(fromStatus string, existing *string, toStatus string, kind *string) error {
-	if toStatus != StatusDone || fromStatus == StatusDone || kind != nil || existing != nil {
+	if !completedStatus(toStatus) || completedStatus(fromStatus) || kind != nil || existing != nil {
 		return nil
 	}
 	return apperr.New(

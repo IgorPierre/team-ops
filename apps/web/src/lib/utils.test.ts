@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { setCurrentLocale } from "./i18n";
 import { errorMessage } from "./errors";
-import { formatDueRelative } from "./utils";
+import { formatDueRelative, isOverdue } from "./utils";
 
 afterEach(() => setCurrentLocale("en"));
 
@@ -18,4 +18,9 @@ describe("display corrections", () => {
     expect(errorMessage(new Error("Email or password is incorrect."))).toBe("E-mail ou senha incorretos.");
     expect(errorMessage(new Error("Unrecognized detail"))).toBe("Unrecognized detail");
   });
+});
+
+it("does not treat deployed work as overdue", () => {
+  expect(isOverdue("2020-01-01", "production")).toBe(false);
+  expect(formatDueRelative("2020-01-01", "production")).not.toMatch(/overdue/);
 });

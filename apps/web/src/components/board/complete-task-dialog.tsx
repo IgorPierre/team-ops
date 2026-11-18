@@ -20,11 +20,13 @@ import { cn } from "@/lib/utils";
  */
 export function CompleteTaskDialog({
   task,
+  production = false,
   onConfirm,
   onCancel,
 }: {
   /** The card being completed; the dialog is open while it is set. */
   task: Task | null;
+  production?: boolean;
   onConfirm: (proof: TaskProof) => void;
   onCancel: () => void;
 }) {
@@ -63,7 +65,7 @@ export function CompleteTaskDialog({
         >
           <DialogHeader
             icon={<CircleCheckIcon />}
-            title={t("Complete {key}", { key: task?.key ?? "" })}
+            title={t(production ? "Publish {key}" : "Complete {key}", { key: task?.key ?? "" })}
             description={t("Where can the finished work be checked? The link stays on the card for anyone reviewing it.")}
           />
           <DialogBody className="gap-5">
@@ -137,7 +139,7 @@ export function CompleteTaskDialog({
             </Button>
             <Button type="submit">
               <CircleCheckIcon />
-              {t("Mark as done")}
+              {t(production ? "Mark as in production" : "Mark as done")}
             </Button>
           </DialogFooter>
         </form>

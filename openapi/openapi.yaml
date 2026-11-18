@@ -606,7 +606,7 @@ components:
           type: string
     TaskStatus:
       type: string
-      enum: [backlog, in_progress, review, done]
+      enum: [backlog, in_progress, review, done, production]
     Priority:
       type: string
       enum: [low, medium, high]
@@ -771,6 +771,7 @@ components:
       properties:
         status: { $ref: "#/components/schemas/TaskStatus" }
         position: { type: string }
+        unblock: { type: boolean, description: Resolve the blocker atomically with the move. }
         expectedVersion: { type: integer }
     ProgressRequest:
       type: object

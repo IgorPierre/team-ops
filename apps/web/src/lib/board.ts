@@ -1,6 +1,6 @@
-import type { Task, TaskStatus } from "@team-ops/api-client";
+import type { Task } from "@team-ops/api-client";
 
-export const COLUMN_ORDER = ["backlog", "in_progress", "review", "done"] as const;
+export const COLUMN_ORDER = ["backlog", "in_progress", "blocked", "review", "done", "production"] as const;
 
 export type ColumnId = (typeof COLUMN_ORDER)[number];
 
@@ -9,6 +9,8 @@ export const COLUMN_TITLES: Record<ColumnId, string> = {
   in_progress: "In Progress",
   review: "Review",
   done: "Done",
+  blocked: "Blocked",
+  production: "Production",
 };
 
 export type BoardColumns = Record<ColumnId, Task[]>;
@@ -17,17 +19,17 @@ export function emptyBoard(): BoardColumns {
   return {
     backlog: [],
     in_progress: [],
+    blocked: [],
     review: [],
     done: [],
+    production: [],
   };
 }
 
 export function groupTasks(tasks: Task[]): BoardColumns {
   const columns = emptyBoard();
   for (const task of tasks) {
-    const status = (COLUMN_ORDER as readonly string[]).includes(task.status)
-      ? (task.status as ColumnId)
-      : "backlog";
+    const status = taskColumn(task);
     columns[status].push(task);
   }
   for (const id of COLUMN_ORDER) {
@@ -48,7 +50,7 @@ export function positionForIndex(column: Task[], index: number): string {
 
 export interface BoardChange {
   id: string;
-  status: TaskStatus;
+  status: ColumnId;
   position: string;
   expectedVersion: number;
 }
@@ -88,11 +90,14 @@ export function applyTask(columns: BoardColumns, task: Task): BoardColumns {
   for (const status of COLUMN_ORDER) {
     next[status] = columns[status].filter((item) => item.id !== task.id);
   }
-  const status = (COLUMN_ORDER as readonly string[]).includes(task.status)
-    ? (task.status as ColumnId)
-    : "backlog";
+  const status = taskColumn(task);
   next[status] = [...next[status], task].sort(
     (a, b) => Number(a.position) - Number(b.position),
   );
   return next;
+}
+
+function taskColumn(task: Task): ColumnId {
+  if (task.blocked) return "blocked";
+  return (COLUMN_ORDER as readonly string[]).includes(task.status) ? task.status : "backlog";
 }

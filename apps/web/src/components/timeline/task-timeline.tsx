@@ -1,5 +1,7 @@
 "use client";
 
+import { isTaskComplete } from "@team-ops/api-client";
+
 import type { Member, Task } from "@team-ops/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { BotIcon, LockIcon, MessageSquareIcon } from "lucide-react";
@@ -54,8 +56,8 @@ export function TaskTimeline({
         const assignee = directory.get(task.assigneeId);
         const when = timelineDate(task, sort);
         const caption =
-          task.status === "done" ? "Done {date}" : sort === "updated" ? "Updated {date}" : task.dueDate ? "Due {date}" : "Created {date}";
-        const body = task.status === "done" && task.completionSummary ? task.completionSummary : task.description;
+          isTaskComplete(task.status) ? "Done {date}" : sort === "updated" ? "Updated {date}" : task.dueDate ? "Due {date}" : "Created {date}";
+        const body = isTaskComplete(task.status) && task.completionSummary ? task.completionSummary : task.description;
         const priority = PRIORITY_DISPLAY[task.priority];
         return {
           id: task.id,

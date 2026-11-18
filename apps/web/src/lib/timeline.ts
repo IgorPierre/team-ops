@@ -1,3 +1,4 @@
+import { isTaskComplete } from "@team-ops/api-client";
 import type { OrgActivity, Task, TaskStatus } from "@team-ops/api-client";
 
 import { intlLocale } from "@/lib/i18n";
@@ -14,10 +15,11 @@ export const STATUS_LABEL: Record<TaskStatus, string> = {
   in_progress: "In progress",
   review: "In review",
   done: "Done",
+  production: "Production",
 };
 
 export function timelineStatus(status: TaskStatus): TimelineStatus {
-  if (status === "done") return "completed";
+  if (isTaskComplete(status)) return "completed";
   if (status === "in_progress" || status === "review") return "current";
   return "upcoming";
 }
@@ -25,6 +27,7 @@ export function timelineStatus(status: TaskStatus): TimelineStatus {
 /** How far along the card is, for the progress bar under each timeline item. */
 export function timelineProgress(status: TaskStatus): number {
   switch (status) {
+    case "production":
     case "done":
       return 100;
     case "review":
@@ -42,7 +45,7 @@ export function timelineProgress(status: TaskStatus): number {
  * when it was created if it has none.
  */
 export function timelineDate(task: Task, sort: TimelineSort): string {
-  if (sort === "updated" || task.status === "done") return task.updatedAt;
+  if (sort === "updated" || isTaskComplete(task.status)) return task.updatedAt;
   return task.dueDate ?? task.createdAt;
 }
 
@@ -74,7 +77,7 @@ export function sortTimelineTasks(tasks: Task[], sort: TimelineSort): Task[] {
   if (sort === "updated") {
     return out.sort((a, b) => dateValue(b.updatedAt) - dateValue(a.updatedAt));
   }
-  const bucket = (t: Task) => (t.status === "done" ? 0 : t.dueDate ? 1 : 2);
+  const bucket = (t: Task) => (isTaskComplete(t.status) ? 0 : t.dueDate ? 1 : 2);
   return out.sort((a, b) => {
     const d = bucket(a) - bucket(b);
     if (d !== 0) return d;

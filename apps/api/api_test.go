@@ -867,3 +867,56 @@ func TestOAuthMCPFlow(t *testing.T) {
 		t.Fatal("agent token works after owner became a viewer")
 	}
 }
+
+func TestProductionMoveResolvesBlocker(t *testing.T) {
+	pool := testPool(t)
+	srv, client := testServer(t, pool)
+	register(t, client, srv.URL, "Deploy Admin", uniqueEmail("deploy"), "password123")
+	org := createOrg(t, client, srv.URL, "Deploy Demo", uniqueSlug("deploy"))
+	project := createProject(t, client, srv.URL, org.ID, "Deploy", "DEP")
+	task := createTask(t, client, srv.URL, map[string]any{
+		"organizationId": org.ID, "projectId": project.ID, "title": "Publish feature",
+	})
+	noProof := do(t, client, http.MethodPost, srv.URL+"/v1/tasks/"+task.ID+"/move", map[string]any{
+		"status": "production", "expectedVersion": task.Version,
+	})
+	if noProof.Error == nil || noProof.Error.Code != "PROOF_REQUIRED" {
+		t.Fatalf("expected proof requirement: %#v", noProof.Error)
+	}
+	blocked := doOK(t, client, http.MethodPost, srv.URL+"/v1/tasks/"+task.ID+"/block", map[string]any{
+		"reason": "Waiting for deploy access", "expectedVersion": task.Version,
+	})
+	var current taskDTO
+	mustUnmarshal(t, blocked.Data, &current)
+	stale := do(t, client, http.MethodPost, srv.URL+"/v1/tasks/"+task.ID+"/move", map[string]any{
+		"status": "production", "unblock": true, "expectedVersion": task.Version,
+		"proof": map[string]any{"kind": "vercel", "url": "https://example.com/demo"},
+	})
+	if stale.Error == nil || stale.Error.Code != "TASK_VERSION_CONFLICT" {
+		t.Fatalf("expected conflict: %#v", stale.Error)
+	}
+	moved := doOK(t, client, http.MethodPost, srv.URL+"/v1/tasks/"+task.ID+"/move", map[string]any{
+		"status": "production", "unblock": true, "expectedVersion": current.Version,
+		"proof": map[string]any{"kind": "vercel", "url": "https://example.com/demo"},
+	})
+	var result struct {
+		Status  string  `json:"status"`
+		Blocked bool    `json:"blocked"`
+		Reason  *string `json:"blockedReason"`
+	}
+	mustUnmarshal(t, moved.Data, &result)
+	if result.Status != "production" || result.Blocked || result.Reason != nil {
+		t.Fatalf("unexpected result: %#v", result)
+	}
+	report := doOK(t, client, http.MethodGet, srv.URL+"/v1/tasks/report?organizationId="+org.ID, nil)
+	var totals struct {
+		Totals struct {
+			Completed int `json:"completed"`
+			Open      int `json:"open"`
+		} `json:"totals"`
+	}
+	mustUnmarshal(t, report.Data, &totals)
+	if totals.Totals.Completed != 1 || totals.Totals.Open != 0 {
+		t.Fatalf("production counted incorrectly: %#v", totals)
+	}
+}

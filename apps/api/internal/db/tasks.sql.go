@@ -390,11 +390,11 @@ SELECT
     )::timestamptz AS started_at,
     -- Done via the complete endpoint or a drag to the Done column;
     -- tasks with no such history (imports, seeds) fall back to their last update.
-    CASE WHEN t.status = 'done' THEN COALESCE(
+    CASE WHEN t.status IN ('done', 'production') THEN COALESCE(
         (
             SELECT max(a.created_at) FROM task_activities a
             WHERE a.task_id = t.id
-              AND (a.action = 'task.completed' OR (a.action = 'task.moved' AND a.new_value->>'status' = 'done'))
+              AND (a.action = 'task.completed' OR (a.action = 'task.moved' AND a.new_value->>'status' IN ('done', 'production')))
         ),
         t.updated_at
     ) END::timestamptz AS completed_at
@@ -404,7 +404,7 @@ WHERE t.organization_id = $1
   AND t.archived_at IS NULL
   AND ($2::uuid IS NULL OR t.project_id = $2)
   AND (
-      t.status <> 'done'
+      t.status NOT IN ('done', 'production')
       OR t.created_at >= $3
       OR t.updated_at >= $3
   )
@@ -632,19 +632,22 @@ func (q *Queries) MaxPositionInColumn(ctx context.Context, arg MaxPositionInColu
 const moveTask = `-- name: MoveTask :one
 UPDATE tasks
 SET
-    status = $1,
-    position = $2,
-    proof_kind = COALESCE($3, proof_kind),
-    proof_url = CASE WHEN $3::text IS NULL THEN proof_url ELSE $4 END,
+    blocked = CASE WHEN $1::boolean THEN FALSE ELSE blocked END,
+    blocked_reason = CASE WHEN $1::boolean THEN NULL ELSE blocked_reason END,
+    status = $2,
+    position = $3,
+    proof_kind = COALESCE($4, proof_kind),
+    proof_url = CASE WHEN $4::text IS NULL THEN proof_url ELSE $5 END,
     version = version + 1,
     updated_at = now()
-WHERE id = $5
-  AND version = $6
+WHERE id = $6
+  AND version = $7
   AND archived_at IS NULL
 RETURNING id, number, organization_id, project_id, title, description, acceptance_criteria, status, priority, assignee_id, reporter_id, due_date, position, blocked, blocked_reason, source, external_ref, source_metadata, completion_summary, version, archived_at, created_at, updated_at, proof_kind, proof_url
 `
 
 type MoveTaskParams struct {
+	Unblock   bool            `json:"unblock"`
 	Status    string          `json:"status"`
 	Position  decimal.Decimal `json:"position"`
 	ProofKind *string         `json:"proof_kind"`
@@ -655,6 +658,7 @@ type MoveTaskParams struct {
 
 func (q *Queries) MoveTask(ctx context.Context, arg MoveTaskParams) (Task, error) {
 	row := q.db.QueryRow(ctx, moveTask,
+		arg.Unblock,
 		arg.Status,
 		arg.Position,
 		arg.ProofKind,

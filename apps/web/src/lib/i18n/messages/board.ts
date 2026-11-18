@@ -3,6 +3,9 @@ import type { Catalog } from "../config";
 /** board strings. Keys are the English text exactly as passed to t(). */
 export const board: Catalog = {
   pt: {
+    Production: "Produção",
+    "Publish {key}": "Publicar {key}",
+    "Mark as in production": "Marcar em produção",
     "Pending items": "Pendências",
     "What is blocking this task?": "O que está bloqueando esta tarefa?",
     "Describe what you need to continue…": "Descreva o que você precisa para continuar…",
@@ -141,6 +144,9 @@ export const board: Catalog = {
     "Could not create task": "Não foi possível criar a tarefa",
   },
   es: {
+    Production: "Producción",
+    "Publish {key}": "Publicar {key}",
+    "Mark as in production": "Marcar en producción",
     "Pending items": "Pendientes",
     "What is blocking this task?": "¿Qué está bloqueando esta tarea?",
     "Describe what you need to continue…": "Describe qué necesitas para continuar…",

@@ -1,4 +1,8 @@
-export type TaskStatus = "backlog" | "in_progress" | "review" | "done";
+export function isTaskComplete(status?: string) {
+  return status === "done" || status === "production";
+}
+
+export type TaskStatus = "backlog" | "in_progress" | "review" | "done" | "production";
 export type Priority = "low" | "medium" | "high";
 export type Source = "manual" | "ai" | "integration";
 export type Role = "admin" | "developer" | "viewer";
@@ -412,7 +416,7 @@ export class TeamOpsClient {
   }
   moveTask(
     id: string,
-    body: { status: TaskStatus; position?: string; proof?: TaskProof; expectedVersion: number },
+    body: { status: TaskStatus; position?: string; proof?: TaskProof; unblock?: boolean; expectedVersion: number },
   ) {
     return this.request<Task>("POST", `/tasks/${id}/move`, body);
   }

@@ -110,6 +110,8 @@ RETURNING *;
 -- name: MoveTask :one
 UPDATE tasks
 SET
+    blocked = CASE WHEN sqlc.arg('unblock')::boolean THEN FALSE ELSE blocked END,
+    blocked_reason = CASE WHEN sqlc.arg('unblock')::boolean THEN NULL ELSE blocked_reason END,
     status = sqlc.arg('status'),
     position = sqlc.arg('position'),
     proof_kind = COALESCE(sqlc.narg('proof_kind'), proof_kind),
@@ -185,11 +187,11 @@ SELECT
     )::timestamptz AS started_at,
     -- Done via the complete endpoint or a drag to the Done column;
     -- tasks with no such history (imports, seeds) fall back to their last update.
-    CASE WHEN t.status = 'done' THEN COALESCE(
+    CASE WHEN t.status IN ('done', 'production') THEN COALESCE(
         (
             SELECT max(a.created_at) FROM task_activities a
             WHERE a.task_id = t.id
-              AND (a.action = 'task.completed' OR (a.action = 'task.moved' AND a.new_value->>'status' = 'done'))
+              AND (a.action = 'task.completed' OR (a.action = 'task.moved' AND a.new_value->>'status' IN ('done', 'production')))
         ),
         t.updated_at
     ) END::timestamptz AS completed_at
@@ -199,7 +201,7 @@ WHERE t.organization_id = sqlc.arg('organization_id')
   AND t.archived_at IS NULL
   AND (sqlc.narg('project_id')::uuid IS NULL OR t.project_id = sqlc.narg('project_id'))
   AND (
-      t.status <> 'done'
+      t.status NOT IN ('done', 'production')
       OR t.created_at >= sqlc.arg('since')
       OR t.updated_at >= sqlc.arg('since')
   )

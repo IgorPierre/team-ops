@@ -393,6 +393,7 @@ func (s *Service) update(w http.ResponseWriter, r *http.Request) {
 }
 
 type moveRequest struct {
+	Unblock         bool        `json:"unblock"`
 	Status          string      `json:"status"`
 	Position        string      `json:"position"`
 	Proof           *proofInput `json:"proof"`
@@ -445,6 +446,7 @@ func (s *Service) Move(ctx context.Context, a actor.Actor, task db.Task, req mov
 		}
 	}
 	updated, err := s.q.MoveTask(ctx, db.MoveTaskParams{
+		Unblock:   req.Unblock,
 		Status:    req.Status,
 		Position:  pos,
 		ProofKind: proofKind,
@@ -458,11 +460,14 @@ func (s *Service) Move(ctx context.Context, a actor.Actor, task db.Task, req mov
 		}
 		return TaskDTO{}, err
 	}
+	if task.Blocked && req.Unblock {
+		_ = s.record(ctx, a, updated.ID, ActionUnblocked, map[string]any{"reason": task.BlockedReason}, nil, nil)
+	}
 	action := ActionMoved
 	if task.Status == StatusBacklog && req.Status == StatusInProgress {
 		action = ActionStarted
 	}
-	if task.Status == StatusDone && req.Status != StatusDone {
+	if completedStatus(task.Status) && !completedStatus(req.Status) {
 		action = ActionReopened
 	}
 	_ = s.record(ctx, a, updated.ID, action, map[string]any{"status": task.Status, "position": task.Position.String()}, map[string]any{"status": updated.Status, "position": updated.Position.String()}, nil)

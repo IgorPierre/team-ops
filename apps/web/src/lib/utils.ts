@@ -1,3 +1,4 @@
+import { isTaskComplete } from "@team-ops/api-client";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -26,7 +27,7 @@ export function formatDueRelative(value?: string | null, status?: string) {
   if (!value) return null;
   const date = new Date(`${value}T00:00:00`);
   const formatted = date.toLocaleDateString(intlLocale(), { day: "numeric", month: "short" });
-  if (status === "done") return translate("Due {date}", { date: formatted });
+  if (isTaskComplete(status)) return translate("Due {date}", { date: formatted });
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const days = Math.round((date.getTime() - today.getTime()) / 86_400_000);
@@ -41,7 +42,7 @@ export function formatDueRelative(value?: string | null, status?: string) {
 
 /** Open work whose due date is before today (local time). */
 export function isOverdue(value?: string | null, status?: string) {
-  if (!value || status === "done") return false;
+  if (!value || isTaskComplete(status)) return false;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return new Date(`${value}T00:00:00`).getTime() < today.getTime();

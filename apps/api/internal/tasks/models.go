@@ -21,6 +21,7 @@ const (
 	StatusInProgress = "in_progress"
 	StatusReview     = "review"
 	StatusDone       = "done"
+	StatusProduction = "production"
 
 	ActionCreated          = "task.created"
 	ActionUpdated          = "task.updated"
@@ -38,7 +39,7 @@ const (
 	ActionCommentCreated   = "comment.created"
 )
 
-var columnOrder = []string{StatusBacklog, StatusInProgress, StatusReview, StatusDone}
+var columnOrder = []string{StatusBacklog, StatusInProgress, StatusReview, StatusDone, StatusProduction}
 
 type TaskDTO struct {
 	ID                 uuid.UUID       `json:"id"`
@@ -157,7 +158,7 @@ func itoa(n int32) string {
 
 func validStatus(s string) bool {
 	switch s {
-	case StatusBacklog, StatusInProgress, StatusReview, StatusDone:
+	case StatusBacklog, StatusInProgress, StatusReview, StatusDone, StatusProduction:
 		return true
 	}
 	return false
@@ -236,4 +237,8 @@ func shouldNormalize(before, after decimal.Decimal) bool {
 		return false
 	}
 	return after.Sub(before).Abs().LessThan(minGap())
+}
+
+func completedStatus(status string) bool {
+	return status == StatusDone || status == StatusProduction
 }

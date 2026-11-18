@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { COLUMN_ORDER, diffBoard, emptyBoard, groupTasks, positionForIndex } from "@/lib/board";
+import { COLUMN_ORDER, diffBoard, emptyBoard, groupTasks, applyTask, positionForIndex } from "@/lib/board";
 import type { Task } from "@team-ops/api-client";
 
 function task(partial: Partial<Task> & Pick<Task, "id" | "status" | "position">): Task {
@@ -27,7 +27,7 @@ function task(partial: Partial<Task> & Pick<Task, "id" | "status" | "position">)
 }
 
 describe("board grouping", () => {
-  it("keeps four columns including empty review", () => {
+  it("keeps all six columns including empty review", () => {
     const columns = groupTasks([
       task({ id: "1", status: "backlog", position: "1000" }),
       task({ id: "2", status: "done", position: "1000" }),
@@ -62,5 +62,28 @@ describe("diffBoard", () => {
     expect(changes).toHaveLength(1);
     expect(changes[0]?.id).toBe("1");
     expect(changes[0]?.status).toBe("in_progress");
+  });
+});
+
+describe("blocked and production columns", () => {
+  it("shows a blocked task only in Blocked and restores its status when resolved", () => {
+    const blocked = task({ id: "blocked", status: "review", position: "1000", blocked: true, blockedReason: "Waiting for access" });
+    const columns = groupTasks([blocked, task({ id: "live", status: "production", position: "1000" })]);
+    expect(columns.blocked).toEqual([blocked]);
+    expect(columns.review).toEqual([]);
+    expect(columns.production[0].id).toBe("live");
+    const resolved = applyTask(columns, { ...blocked, blocked: false });
+    expect(resolved.blocked).toEqual([]);
+    expect(resolved.review[0].id).toBe("blocked");
+  });
+
+  it("distinguishes a blocker drop from a real status move", () => {
+    const previous = groupTasks([task({ id: "1", status: "in_progress", position: "1000" })]);
+    const next = emptyBoard();
+    next.blocked = previous.in_progress;
+    expect(diffBoard(previous, next, "1")[0].status).toBe("blocked");
+    next.blocked = [];
+    next.production = previous.in_progress;
+    expect(diffBoard(previous, next, "1")[0].status).toBe("production");
   });
 });

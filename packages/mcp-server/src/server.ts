@@ -49,7 +49,7 @@ function safe<A>(fn: (args: A) => Promise<unknown>) {
   };
 }
 
-const status = z.enum(["backlog", "in_progress", "review", "done"]);
+const status = z.enum(["backlog", "in_progress", "review", "done", "production"]);
 const orgArg = z.string().uuid().optional().describe("Defaults to the organization you signed in to");
 
 /**

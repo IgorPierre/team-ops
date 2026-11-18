@@ -212,8 +212,8 @@ func buildReport(rows []db.ListReportTasksRow, from, end, today time.Time, assig
 		}
 		task := reportTask(row)
 		created := in(row.CreatedAt.Time)
-		completed := row.Status == StatusDone && task.CompletedAt != nil && in(*task.CompletedAt)
-		open := row.Status != StatusDone
+		completed := completedStatus(row.Status) && task.CompletedAt != nil && in(*task.CompletedAt)
+		open := !completedStatus(row.Status)
 		if !created && !completed && !open {
 			continue
 		}
@@ -333,7 +333,7 @@ func reportTask(row db.ListReportTasksRow) ReportTask {
 		v := row.DueDate.Time.Format(dateLayout)
 		t.DueDate = &v
 	}
-	if row.Status == StatusDone && t.CompletedAt != nil {
+	if completedStatus(row.Status) && t.CompletedAt != nil {
 		start := t.CreatedAt
 		if t.StartedAt != nil && t.StartedAt.Before(*t.CompletedAt) {
 			start = *t.StartedAt

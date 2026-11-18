@@ -1,5 +1,7 @@
 "use client";
 
+import { isTaskComplete } from "@team-ops/api-client";
+
 import type { Task } from "@team-ops/api-client";
 import {
   BotIcon,
@@ -80,7 +82,7 @@ export function TaskCard({ task, assigneeName, showProject, asHandle, isOverlay,
             {due}
           </Row>
         ) : null}
-        {task.status === "done" && task.proof ? <ProofLink proof={task.proof} /> : null}
+        {isTaskComplete(task.status) && task.proof ? <ProofLink proof={task.proof} /> : null}
         {checklist.total > 0 ? (
           <BarProgress
             className="pt-1"
@@ -92,11 +94,13 @@ export function TaskCard({ task, assigneeName, showProject, asHandle, isOverlay,
         ) : null}
       </div>
 
+      {task.blockedReason && task.blocked ? <p className="px-4 pb-3 text-xs text-destructive whitespace-pre-wrap break-words">{task.blockedReason}</p> : null}
+
       <footer className="flex items-center justify-between gap-2 border-t px-4 py-2.5 text-xs">
-        {task.status !== "done" ? (
+        {!isTaskComplete(task.status) ? (
           <Status color={priority.color}>{t(priority.label)}</Status>
         ) : (
-          <Status color="green">{t("Done")}</Status>
+          <Status color="green">{t(task.status === "production" ? "Production" : "Done")}</Status>
         )}
         <div className="text-muted-foreground flex items-center gap-3">
           {task.commentCount > 0 ? (

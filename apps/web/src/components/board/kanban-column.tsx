@@ -16,6 +16,8 @@ const DOT: Record<ColumnId, string> = {
   in_progress: "bg-[#008AF5]",
   review: "bg-yellow-500",
   done: "bg-emerald-500",
+  blocked: "bg-red-500",
+  production: "bg-emerald-700",
 };
 
 interface KanbanColumnViewProps extends Omit<ComponentProps<typeof KanbanColumn>, "children"> {

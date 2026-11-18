@@ -1,6 +1,6 @@
 "use client";
 
-import type { Member, Task, TaskProof } from "@team-ops/api-client";
+import { isTaskComplete, type Member, type Task, type TaskProof } from "@team-ops/api-client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -19,6 +19,10 @@ import {
   type BoardColumns,
 } from "@/lib/board";
 
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader } from "@/components/ui/dialog";
+import { Field } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
 import { CompleteTaskDialog } from "./complete-task-dialog";
 import { KanbanColumnView } from "./kanban-column";
 import { TaskCard } from "./task-card";
@@ -62,6 +66,17 @@ export function ProjectKanban({
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   // A card dropped on Done waits here until its proof is given (or the move is cancelled).
   const [completing, setCompleting] = useState<Task | null>(null);
+  const [publishing, setPublishing] = useState(false);
+  const [blocking, setBlocking] = useState<Task | null>(null);
+  const [blockReason, setBlockReason] = useState("");
+  const blockResolver = useRef<((reason: string | null) => void) | null>(null);
+
+  function settleBlock(reason: string | null) {
+    blockResolver.current?.(reason);
+    blockResolver.current = null;
+    setBlocking(null);
+  }
+
   const proofResolver = useRef<((proof: TaskProof | null) => void) | null>(null);
 
   function askProof(task: Task) {
@@ -87,12 +102,14 @@ export function ProjectKanban({
       status: Task["status"];
       position: string;
       proof?: TaskProof;
+      unblock?: boolean;
       expectedVersion: number;
     }) =>
       api.moveTask(change.id, {
         status: change.status,
         position: change.position,
         proof: change.proof,
+        unblock: change.unblock,
         expectedVersion: change.expectedVersion,
       }),
   });
@@ -110,7 +127,8 @@ export function ProjectKanban({
       .find((task) => task.id === movedId);
     const movedChange = changes.find((change) => change.id === movedId);
     let proof: TaskProof | undefined;
-    if (moved && movedChange?.status === "done" && moved.status !== "done") {
+    if (moved && movedChange && isTaskComplete(movedChange.status) && !isTaskComplete(moved.status)) {
+      setPublishing(movedChange.status === "production");
       const answer = await askProof(moved);
       if (!answer) {
         setColumns(previous);
@@ -118,17 +136,35 @@ export function ProjectKanban({
       }
       proof = answer;
     }
+    let reason: string | null = null;
+    if (moved && movedChange?.status === "blocked" && !moved.blocked) {
+      reason = await new Promise<string | null>((resolve) => {
+        blockResolver.current = resolve;
+        setBlockReason("");
+        setBlocking(moved);
+      });
+      if (!reason) {
+        setColumns(previous);
+        return;
+      }
+    }
     try {
       const updated = await Promise.all(
-        changes.map((change) =>
-          moveMutation.mutateAsync({
+        changes.map(async (change) => {
+          const current = Object.values(previous).flat().find((task) => task.id === change.id)!;
+          if (change.status === "blocked" && !current.blocked) {
+            return api.blockTask(current.id, { reason: reason!, expectedVersion: current.version });
+          }
+          const updated = await moveMutation.mutateAsync({
             id: change.id,
-            status: change.status,
+            status: change.status === "blocked" ? current.status : change.status,
             position: change.position,
             proof: change.id === movedId ? proof : undefined,
             expectedVersion: change.expectedVersion,
-          }),
-        ),
+            unblock: current.blocked && change.status !== "blocked",
+          });
+          return updated;
+        }),
       );
       queryClient.setQueryData<Task[]>(queryKey, (current) => {
         const list = current ? [...current] : [];
@@ -143,6 +179,12 @@ export function ProjectKanban({
       setColumns(previous);
       queryClient.setQueryData(queryKey, data);
       toast.error(errorMessage(error, t("Could not move task. Restored the board.")));
+    } finally {
+      void queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      void queryClient.invalidateQueries({ queryKey: ["timeline-tasks"] });
+      void queryClient.invalidateQueries({ queryKey: ["activities"] });
+      void queryClient.invalidateQueries({ queryKey: ["report"] });
+      void queryClient.invalidateQueries({ queryKey: ["org-activity"] });
     }
   }
 
@@ -213,7 +255,24 @@ export function ProjectKanban({
           }}
         </KanbanOverlay>
       </Kanban>
-      <CompleteTaskDialog task={completing} onConfirm={settleProof} onCancel={() => settleProof(null)} />
+      <Dialog open={Boolean(blocking)} onOpenChange={(open) => { if (!open) settleBlock(null); }}>
+        <DialogContent className="max-w-lg">
+          <form onSubmit={(event) => { event.preventDefault(); if (blockReason.trim()) settleBlock(blockReason.trim()); }}>
+            <DialogHeader title={t("Report blocker")} description={blocking?.title} />
+            <DialogBody>
+              <Field label={t("What is blocking this task?")} htmlFor="kanban-block-reason">
+                <Textarea id="kanban-block-reason" autoFocus required value={blockReason}
+                  onChange={(event) => setBlockReason(event.target.value)} placeholder={t("Describe what you need to continue…")} />
+              </Field>
+            </DialogBody>
+            <DialogFooter>
+              <Button variant="secondary" onClick={() => settleBlock(null)}>{t("Cancel")}</Button>
+              <Button type="submit" disabled={!blockReason.trim()}>{t("Report blocker")}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <CompleteTaskDialog production={publishing} task={completing} onConfirm={settleProof} onCancel={() => settleProof(null)} />
       <TaskDrawer
         task={openTask}
         members={members}

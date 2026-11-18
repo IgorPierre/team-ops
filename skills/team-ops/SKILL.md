@@ -94,7 +94,7 @@ done without it:
 
 - Always pass `expected_version` from the latest task payload. On
   `TASK_VERSION_CONFLICT`, `team_ops_get_task` and retry once.
-- Columns are only `backlog`, `in_progress`, `review`, `done`.
+- Statuses are `backlog`, `in_progress`, `review`, `done`, `production`. Use `production` only after the finished work is deployed. Blocked is a separate flag with a reason, displayed in its own board column.
 - Never put secrets, tokens, customer data or full stack traces on a card.
 - Don't create cards for pure questions or explanations with no code change.
 - If a board call fails, tell the user in one line and keep coding — never

@@ -78,7 +78,7 @@ export const upsertSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   acceptance_criteria: z.string().optional(),
-  status: z.enum(["backlog", "in_progress", "review", "done"]).optional(),
+  status: z.enum(["backlog", "in_progress", "review", "done", "production"]).optional(),
   priority: z.enum(["low", "medium", "high"]).optional(),
   external_ref: z.string().optional(),
   expected_version: z.number().int().optional(),

@@ -1,5 +1,7 @@
 "use client";
 
+import { isTaskComplete } from "@team-ops/api-client";
+
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRightIcon, BotIcon, UserXIcon } from "lucide-react";
 import Link from "next/link";
@@ -70,7 +72,7 @@ export default function PersonPage() {
     const list = tasks.data ?? [];
     if (tab === "open")
       return sortTimelineTasks(
-        list.filter((t) => t.status !== "done"),
+        list.filter((t) => !isTaskComplete(t.status)),
         "due",
       );
     if (tab === "completed")
