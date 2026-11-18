@@ -13,6 +13,20 @@ const nextConfig: NextConfig = {
         source: "/v1/:path*",
         destination: `${apiUrl}/v1/:path*`,
       },
+      // One public origin for people and coding agents: health, OAuth discovery
+      // and the token endpoints live in the API. /oauth/authorize is a page here.
+      {
+        source: "/healthz",
+        destination: `${apiUrl}/healthz`,
+      },
+      {
+        source: "/.well-known/:path*",
+        destination: `${apiUrl}/.well-known/:path*`,
+      },
+      {
+        source: "/oauth/:endpoint(token|register|revoke)",
+        destination: `${apiUrl}/oauth/:endpoint`,
+      },
     ];
   },
 };

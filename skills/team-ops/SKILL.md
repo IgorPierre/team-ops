@@ -1,68 +1,103 @@
 ---
 name: team-ops
 description: >-
-  Keeps the Team-Ops Kanban current while coding. Auto-invoke when starting
-  work, committing, opening PRs, or finishing tasks. Use when Team-Ops MCP is
-  configured, when `.team-ops.json` exists, or when the user mentions Team-Ops,
-  the board, or a task key like ERP-142.
+  Keeps the team's Team-Ops Kanban in sync with the coding work you do. Use it
+  whenever you start, continue, or finish a coding task in a repo that has
+  `.team-ops.json` or a `team-ops` MCP server — open or pick up a card, report
+  progress, and close it with a summary, without being asked. Also use when the
+  user mentions Team-Ops, the board, a card, or a task key like API-142.
 ---
 
 # Team-Ops board
 
-You are a coding agent with a Team-Ops MCP server. The board is the source of
-truth. Do the work **and** update the card. Do not wait for a standup.
+The team follows AI-assisted work on a shared Kanban instead of writing cards
+by hand. **Every piece of work you do in this repo gets a card**, and the card
+says what you did. Keep it current as you go — nobody will remind you.
 
-MCP tools talk to the Team-Ops HTTP API only. They never touch PostgreSQL.
+The `team_ops_*` tools come from the Team-Ops MCP server, which the developer
+signed in to with their Team-Ops account. Cards you create are assigned to them
+automatically, and the organization is the one they picked when signing in.
 
-## Project config
+## 1. Find the project
 
-If `.team-ops.json` exists in the repo root, read it first:
+Read `.team-ops.json` in the repo root:
 
 ```json
-{
-  "url": "http://localhost:8080",
-  "organizationId": "uuid",
-  "projectId": "uuid",
-  "projectKey": "ERP",
-  "autoUpdate": true
-}
+{ "url": "https://ops.acme.dev", "projectKey": "API", "autoUpdate": true }
 ```
 
-When `autoUpdate` is `true`, update the board proactively at each milestone
-below — do not wait for the user to ask.
+Pass its `projectKey` as `project_key` to the tools (no ids needed). If the
+file or the key is missing, call `team_ops_list_projects`, ask the user which
+project this repo belongs to, and save `projectKey` into `.team-ops.json`.
 
-If ids are missing, call `team_ops_list_organizations` and
-`team_ops_list_projects`, then continue.
+If a tool says the server needs authentication, tell the user to sign in
+(Claude Code: `/mcp` → team-ops → Authenticate) and continue coding meanwhile.
 
-## When you start work
+`autoUpdate: true` (the default) means: update the board at each step below on
+your own. If it is `false`, only touch the board when asked.
 
-1. Resolve `organization_id` and `project_id` from `.team-ops.json` or MCP.
-2. `team_ops_list_tasks` with `status=backlog` or search the key/title the user gave.
-3. If no card exists and the user is starting new work, `team_ops_upsert_task`
-   with a stable `external_ref` (branch name, issue id, or ticket key).
-4. `team_ops_move_task` to `in_progress` with `expected_version` from the task.
+## 2. When you start a task
 
-## While you work
+1. If the user named a card (`API-142`) or the work clearly continues one,
+   `team_ops_list_tasks` with `search: "API-142"` (or a few title words).
+2. Otherwise create one with `team_ops_upsert_task`:
+   - `title`: short imperative outcome — "Add retry to Stripe webhooks", not "work on stripe".
+   - `description`: the user's request and why, in 1–3 sentences.
+   - `acceptance_criteria`: how we'll know it's done, as a markdown checklist
+     (`- [ ] Webhook retries 3 times`, one check per line). The board shows it
+     as a progress bar on the card.
+   - `external_ref`: the branch name if there is one, else a stable slug like `fix/cart-rounding`.
+     Re-using it later updates the same card instead of duplicating it.
+   - `status: "in_progress"`, and `priority` if the user implied urgency.
+3. If you picked up an existing card that isn't in progress, `team_ops_move_task`
+   to `in_progress` (or pass `status` to `team_ops_upsert_task` — that moves it too,
+   including reopening a done card).
 
-- After a meaningful step: `team_ops_report_progress` (summary, branch, commits, PR URL, tests, blockers).
-- Blocked: `team_ops_block_task`. Unblocked: `team_ops_unblock_task`.
-- Prefer `team_ops_upsert_task` with the same `external_ref` so you do not create duplicates.
+Small follow-ups in the same session (a typo fix the user asks for right after)
+belong on the current card; separate requests get their own card.
 
-## When you open a PR
+## 3. While you work
 
-`team_ops_request_review` with a summary and `pull_request_url`.
+- When you finish a checklist item, tick it (`- [x]`) by sending the updated
+  `acceptance_criteria` to `team_ops_upsert_task` (same `external_ref`).
+- After a meaningful step (a commit, a passing test run, a design decision),
+  `team_ops_report_progress` with a one-line `summary`, plus `branch`,
+  `commit_shas`, `tests` when you have them.
+- Stuck on something only a human can resolve: `team_ops_block_task` with the
+  reason; `team_ops_unblock_task` when it's cleared.
+- Opened a PR: `team_ops_request_review` with `summary` and `pull_request_url`.
 
-## When you are done
+## 4. When you finish
 
-`team_ops_complete_task` with `completion_summary` and `acceptance_criteria_met: true`.
+`team_ops_complete_task` with `acceptance_criteria_met: true` and a
+`completion_summary` a manager can read without opening the code:
+
+> Added exponential backoff (3 attempts, jitter) to Stripe webhook delivery in
+> `billing/webhooks.go`; failed events go to a dead-letter table. Tests:
+> `go test ./billing/...` passing. PR #48.
+
+What changed, where, how it was verified, and any follow-up. If the work is
+not actually done, report progress instead of completing.
+
+Also say where the work can be checked — the board refuses to mark a card
+done without it:
+
+| `proof_kind` | `proof_url` |
+| --- | --- |
+| `github` | The PR or commit |
+| `vercel` | The deploy or preview |
+| `supabase` | The dashboard page of the migration, function or table |
+| `other` | Any other link (doc, ticket, dashboard) |
+| `none` | Leave out — only for work with nothing to link (planning, research) |
 
 ## Rules
 
-- Always send `expected_version` from the last task payload. On `TASK_VERSION_CONFLICT`, fetch the task again and retry.
-- Never invent column names. Only `backlog`, `in_progress`, `review`, `done`.
-- Never skip the board because the code compiled.
-- Task keys look like `ERP-142` (`projectKey-number`). Use search when the user mentions a key.
+- Always pass `expected_version` from the latest task payload. On
+  `TASK_VERSION_CONFLICT`, `team_ops_get_task` and retry once.
+- Columns are only `backlog`, `in_progress`, `review`, `done`.
+- Never put secrets, tokens, customer data or full stack traces on a card.
+- Don't create cards for pure questions or explanations with no code change.
+- If a board call fails, tell the user in one line and keep coding — never
+  block the actual work on the board.
 
-## More detail
-
-See [reference.md](reference.md) for tool parameters and examples.
+See [reference.md](reference.md) for every tool and its parameters.
