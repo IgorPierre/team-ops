@@ -1,47 +1,61 @@
 "use client";
 
-import * as Dialog from "@radix-ui/react-dialog";
-import { XIcon } from "lucide-react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 
 import { cn } from "@/lib/utils";
 
-export function Sheet({ ...props }: React.ComponentProps<typeof Dialog.Root>) {
-  return <Dialog.Root {...props} />;
-}
+import { DialogCloseButton, DialogOverlay } from "./dialog";
 
-export function SheetTrigger(props: React.ComponentProps<typeof Dialog.Trigger>) {
-  return <Dialog.Trigger {...props} />;
-}
+/**
+ * Carbon's Drawer: a floating grey shell docked right with a 12px gutter,
+ * header and footer on the shell, content in a white panel inside it.
+ */
+export const Sheet = DialogPrimitive.Root;
+export const SheetTitle = DialogPrimitive.Title;
+export const SheetDescription = DialogPrimitive.Description;
 
 export function SheetContent({
   className,
   children,
   ...props
-}: React.ComponentProps<typeof Dialog.Content>) {
+}: React.ComponentProps<typeof DialogPrimitive.Content>) {
   return (
-    <Dialog.Portal>
-      <Dialog.Overlay className="data-[state=open]:animate-in data-[state=closed]:animate-out fixed inset-0 z-50 bg-black/30" />
-      <Dialog.Content
+    <DialogPrimitive.Portal>
+      <DialogOverlay />
+      <DialogPrimitive.Content
         className={cn(
-          "bg-background fixed inset-y-0 right-0 z-50 flex w-full max-w-lg flex-col border-l shadow-lg",
+          "bg-accent dark:bg-card shadow-button-base fixed inset-y-0 right-0 z-50 flex w-full max-w-xl flex-col border outline-none sm:inset-y-3 sm:right-3 sm:rounded-xl",
+          "dark:shadow-surface dark:border-transparent",
+          "data-[state=open]:animate-in data-[state=open]:slide-in-from-right data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right duration-300",
           className,
         )}
         {...props}
       >
         {children}
-        <Dialog.Close className="ring-offset-background focus:ring-ring absolute top-4 right-4 rounded-sm opacity-70 hover:opacity-100 focus:ring-2 focus:outline-none">
-          <XIcon className="size-4" />
-          <span className="sr-only">Close</span>
-        </Dialog.Close>
-      </Dialog.Content>
-    </Dialog.Portal>
+        <DialogCloseButton className="top-2.5 right-3" />
+      </DialogPrimitive.Content>
+    </DialogPrimitive.Portal>
   );
 }
 
 export function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn("flex flex-col gap-1.5 p-6", className)} {...props} />;
+  return (
+    <div className={cn("text-muted-foreground flex shrink-0 flex-col gap-1 px-6 py-4 pr-14", className)} {...props} />
+  );
 }
 
-export function SheetTitle(props: React.ComponentProps<typeof Dialog.Title>) {
-  return <Dialog.Title className="text-lg font-semibold" {...props} />;
+export function SheetBody({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      className={cn(
+        "bg-card dark:bg-muted/40 -mx-px flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto border p-6 sm:rounded-xl",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return <div className={cn("flex shrink-0 items-center justify-end gap-2 px-6 py-4", className)} {...props} />;
 }

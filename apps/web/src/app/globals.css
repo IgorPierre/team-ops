@@ -1,91 +1,297 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Design tokens — the Carbon "zinc" theme (same palette, radius, shadows and
+ * Geist type as the EAP / Carbon apps). Monochrome UI: the primary action is
+ * near-black in light mode and white in dark mode; colour is reserved for
+ * statuses, badges and charts.
+ *
+ * Surfaces: `background` is the grey app frame (navigation rail), `card` is
+ * the white content panel and every surface that sits on it.
+ */
 :root {
-  --background: oklch(0.97 0.004 250);
-  --foreground: oklch(0.22 0.02 258);
-  --card: oklch(1 0.002 250);
-  --card-foreground: oklch(0.22 0.02 258);
-  --popover: oklch(1 0.002 250);
-  --popover-foreground: oklch(0.22 0.02 258);
-  --primary: oklch(0.5 0.18 256);
-  --primary-foreground: oklch(0.98 0.01 250);
-  --secondary: oklch(0.95 0.01 250);
-  --secondary-foreground: oklch(0.28 0.02 258);
-  --muted: oklch(0.945 0.008 250);
-  --muted-foreground: oklch(0.5 0.02 257);
-  --accent: oklch(0.94 0.02 256);
-  --accent-foreground: oklch(0.28 0.02 258);
-  --destructive: oklch(0.577 0.245 27.325);
-  --success: oklch(0.52 0.12 155);
-  --border: oklch(0.91 0.01 250);
-  --input: oklch(0.91 0.01 250);
-  --ring: oklch(0.58 0.2 256);
-  --radius: 0.75rem;
+  --background: hsl(220 4% 95%);
+  --canvas: var(--background);
+  --foreground: hsl(220 10% 3.9%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(220 10% 3.9%);
+  /* Cards sitting on the content panel (board cards, tiles, tables). */
+  --surface: hsl(0 0% 100%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(220 10% 3.9%);
+  --active: hsl(222 10% 85%);
+  --active-foreground: hsl(222 0% 8%);
+  --primary: hsl(220 5.9% 10%);
+  --primary-foreground: hsl(0 0% 98%);
+  --secondary: hsl(220 4.8% 95.9%);
+  --secondary-foreground: hsl(220 5% 26%);
+  --muted: hsl(220 4.8% 92.9%);
+  --muted-foreground: hsl(220 3.8% 46.1%);
+  --subtle-foreground: hsl(220 3.8% 56%);
+  --accent: hsl(220 4.8% 95.9%);
+  --accent-foreground: hsl(220 5.9% 10%);
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --success: hsl(142 70% 45%);
+  --warning: hsl(32 81% 52%);
+  --border: hsl(220 5.9% 90%);
+  --input: hsl(220 5.9% 90%);
+  --ring: hsl(220 5.9% 10%);
+  /* Accent of the chosen theme colour (progress bars, highlights). Team-Ops
+     own theme keeps the UI monochrome with the emerald of the logo. */
+  --theme: hsl(160 84% 39%);
+  /* Kept for the logo and a few accents; the UI itself is monochrome. */
+  --brand: hsl(220 5.9% 10%);
+  --brand-foreground: hsl(0 0% 98%);
+
+  /* Categorical chart slots, validated for CVD separation on --card. */
+  --chart-1: #2e90fa;
+  --chart-2: #f79009;
+
+  --radius: 0.4375rem;
+  --topbar-height: 49px;
+
+  --base-shadow-color: rgb(0 0 0 / 0.05);
+  --button-base-shadow: 0px 1px 1px -1px rgb(0 0 0 / 0.08), 0px 2px 2px -1px rgb(0 0 0 / 0.08),
+    0px 0px 0px 1px rgb(0 0 0 / 0.06), inset 0px 1px 0px #fff, inset 0px 1px 2px 1px #fff,
+    inset 0px 1px 2px rgb(0 0 0 / 0.06);
+  --popover-shadow: 0px 0px 3.6px rgba(0, 0, 0, 0.04), 0px 0px 10px rgba(0, 0, 0, 0.04),
+    0px 0px 24.1px rgba(0, 0, 0, 0.05), 0px 0px 80px rgba(0, 0, 0, 0.08);
+  /* Dark-mode raised surface (cards, modals, drawers); unused in light mode. */
+  --surface-shadow: none;
 }
 
 .dark {
-  --background: oklch(0.18 0.016 260);
-  --foreground: oklch(0.96 0.01 250);
-  --card: oklch(0.22 0.016 260);
-  --card-foreground: oklch(0.96 0.01 250);
-  --popover: oklch(0.22 0.016 260);
-  --popover-foreground: oklch(0.96 0.01 250);
-  --primary: oklch(0.68 0.16 256);
-  --primary-foreground: oklch(0.18 0.02 260);
-  --secondary: oklch(0.28 0.016 260);
-  --secondary-foreground: oklch(0.96 0.01 250);
-  --muted: oklch(0.28 0.016 260);
-  --muted-foreground: oklch(0.72 0.02 250);
-  --accent: oklch(0.3 0.03 256);
-  --accent-foreground: oklch(0.96 0.01 250);
-  --destructive: oklch(0.704 0.191 22.216);
-  --success: oklch(0.72 0.12 155);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.68 0.16 256);
+  --background: hsl(0 6.8% 8.1%);
+  --foreground: hsl(0 0% 93%);
+  --card: hsl(0 10% 3.9%);
+  --card-foreground: hsl(0 0% 93%);
+  --surface: hsl(0 0% 9.5%);
+  --popover: hsl(0 0% 7%);
+  --popover-foreground: hsl(0 0% 93%);
+  --active: hsl(0 0% 14%);
+  --active-foreground: hsl(0 0% 100%);
+  --primary: hsl(0 0% 100%);
+  --primary-foreground: hsl(0 0% 0%);
+  --secondary: hsl(0 0% 7%);
+  --secondary-foreground: hsl(0 0% 80%);
+  --muted: hsl(0 10% 10%);
+  --muted-foreground: hsl(0 0% 63%);
+  --subtle-foreground: hsl(0 0% 52%);
+  --accent: hsl(0 0% 10%);
+  --accent-foreground: hsl(0 0% 93%);
+  --destructive: hsl(0 100% 64%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --success: hsl(152 72% 53%);
+  --warning: hsl(38 92% 60%);
+  --border: hsl(0 0% 15%);
+  --input: hsl(0 0% 15%);
+  --ring: hsl(0 0% 35%);
+  --theme: hsl(158 64% 52%);
+  --brand: hsl(0 0% 100%);
+  --brand-foreground: hsl(0 0% 0%);
+
+  --chart-1: #53b1fd;
+  --chart-2: #fdb022;
+
+  --base-shadow-color: rgb(0 0 0 / 0.2);
+  --button-base-shadow: 0px 0px 0px 0.5px rgb(0 0 0 / 0.4), 0px 1px 1px -1px rgb(0 0 0 / 0.12),
+    0px 2px 2px -1px rgb(0 0 0 / 0.12), inset 0px 0.5px 0px rgb(255 255 255 / 0.06),
+    inset 0px 0px 1px 0px rgb(255 255 255 / 0.16), inset 0px -6px 12px -4px rgb(0 0 0 / 0.16);
+  --popover-shadow: 0px 0px 4px rgba(0, 0, 0, 0.08), 0px 0px 10px rgba(0, 0, 0, 0.12),
+    0px 0px 24px rgba(0, 0, 0, 0.16), 0px 0px 80px rgba(0, 0, 0, 0.2);
+  --surface-shadow: inset 0 0.5px 0 rgb(255 255 255 / 0.08), inset 0 0 1px rgb(255 255 255 / 0.24),
+    0 0 0 0.5px rgb(0 0 0 / 1), 0px 0px 4px rgba(0, 0, 0, 0.08);
 }
 
 @theme inline {
+  --color-canvas: var(--canvas);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-surface: var(--surface);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
+  --color-active: var(--active);
+  --color-active-foreground: var(--active-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
+  --color-theme: var(--theme);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-xl: calc(var(--radius) + 4px);
   --radius-lg: var(--radius);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
 
-html,
-body {
-  overflow-x: clip;
-}
+  --shadow-xs: 0 1px var(--base-shadow-color);
+  --shadow-sm: 0 1px 2px 0 var(--base-shadow-color);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-button-base: var(--button-base-shadow);
+  --shadow-popover: var(--popover-shadow);
+  --shadow-surface: var(--surface-shadow);
 
-body {
-  background: var(--background);
-  color: var(--foreground);
+  --text-xxs: 0.675rem;
+
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --tracking-normal: -0.02em;
 }
 
 @layer base {
   * {
     @apply border-border;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
   }
+
+  *::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 5px;
+  }
+
+  html,
+  body {
+    overflow-x: clip;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    letter-spacing: var(--tracking-normal);
+    font-feature-settings: "rlig" 1, "calt" 1;
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--subtle-foreground);
+  }
+
+  ::selection {
+    @apply bg-primary/10;
+  }
+}
+
+/* Hide a scrollbar but keep the element scrollable. */
+@utility scrollbar-hide {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/*
+ * Theme colours (Carbon): override the primary action colour. "zinc" is the
+ * default above, so it has no block.
+ */
+[data-theme-color="neutral"] {
+  --theme: hsl(0 0% 45.1%);
+  --primary: hsl(0 0% 9%);
+  --primary-foreground: hsl(0 0% 98%);
+  --ring: hsl(0 0% 3.9%);
+}
+[data-theme-color="red"] {
+  --theme: hsl(0 72.2% 50.6%);
+  --primary: hsl(0 72.2% 50.6%);
+  --primary-foreground: hsl(0 85.7% 97.3%);
+  --ring: hsl(0 72.2% 50.6%);
+}
+[data-theme-color="orange"] {
+  --theme: hsl(17 96% 57%);
+  --primary: hsl(17 96% 57%);
+  --primary-foreground: hsl(60 9.1% 97.8%);
+  --ring: hsl(17 96% 57%);
+}
+[data-theme-color="yellow"] {
+  --theme: hsl(47.9 95.8% 53.1%);
+  --primary: hsl(47.9 95.8% 53.1%);
+  --primary-foreground: hsl(26 83.3% 14.1%);
+  --ring: hsl(47.9 95.8% 40%);
+}
+[data-theme-color="green"] {
+  --theme: hsl(171 62% 41%);
+  --primary: hsl(171 62% 41%);
+  --primary-foreground: hsl(171 100% 97.3%);
+  --ring: hsl(171 62% 41%);
+}
+[data-theme-color="blue"] {
+  --theme: hsl(237 57% 30%);
+  --primary: hsl(237 57% 30%);
+  --primary-foreground: hsl(210 40% 98%);
+  --ring: hsl(237.2 83.2% 53.3%);
+}
+[data-theme-color="violet"] {
+  --theme: hsl(238 57% 50%);
+  --primary: hsl(238 57% 50%);
+  --primary-foreground: hsl(238 20% 98%);
+  --ring: hsl(238 83.3% 57.8%);
+}
+.dark[data-theme-color="neutral"] {
+  --theme: hsl(0 0% 60%);
+  --primary: hsl(30 24% 94%);
+  --primary-foreground: hsl(0 0% 1%);
+  --ring: hsl(0 0% 83.1%);
+}
+.dark[data-theme-color="orange"] {
+  --primary-foreground: hsl(60 9.1% 3.8%);
+}
+.dark[data-theme-color="yellow"] {
+  --theme: hsl(61 100% 53.1%);
+  --primary: hsl(61 100% 53.1%);
+  --primary-foreground: hsl(61 83.3% 14.1%);
+  --ring: hsl(61 91.7% 32.9%);
+}
+.dark[data-theme-color="green"] {
+  --theme: hsl(171 98% 59%);
+  --primary: hsl(171 98% 59%);
+  --primary-foreground: hsl(144.9 80.4% 10%);
+  --ring: hsl(171 71.8% 29.2%);
+}
+.dark[data-theme-color="blue"] {
+  --theme: hsl(216 98% 52%);
+  --primary: hsl(216 98% 52%);
+  --primary-foreground: hsl(216 80.4% 100%);
+  --ring: hsl(216 71.8% 29.2%);
+}
+.dark[data-theme-color="violet"] {
+  --theme: hsl(263.4 70% 50.4%);
+  --primary: hsl(263.4 70% 50.4%);
+  --primary-foreground: hsl(0 0% 100%);
+  --ring: hsl(263.4 70% 50.4%);
 }

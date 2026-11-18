@@ -1,18 +1,29 @@
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronsUpDownIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-export function Select({ className, ...props }: React.ComponentProps<"select">) {
+import { controlBase, focusRing } from "./styles";
+
+/** Native select styled like the other controls: accessible and mobile-friendly. */
+export function Select({
+  className,
+  size = "md",
+  ...props
+}: Omit<React.ComponentProps<"select">, "size"> & { size?: "sm" | "md" }) {
   return (
-    <div className="relative">
+    <div className={cn("relative w-full", className)}>
       <select
         className={cn(
-          "border-input bg-background ring-offset-background focus-visible:ring-ring h-9 w-full appearance-none rounded-md border px-3 pr-8 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-          className,
-        )}
+          controlBase,
+          focusRing,
+          size === "sm" ? "h-8" : "h-10 max-md:h-11",
+          "cursor-pointer appearance-none truncate pr-9 pl-3 text-sm")}
         {...props}
       />
-      <ChevronDownIcon className="text-muted-foreground pointer-events-none absolute top-2.5 right-2.5 size-4" />
+      <ChevronsUpDownIcon
+        className="text-muted-foreground/70 pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2"
+        aria-hidden="true"
+      />
     </div>
   );
 }

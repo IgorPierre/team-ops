@@ -1,22 +1,31 @@
 "use client";
 
 import type { Member, Task } from "@team-ops/api-client";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArchiveIcon, BotIcon, OctagonAlertIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { Badge } from "@/components/ui/badge";
+import { UserAvatar } from "@/components/ui/avatar";
+import { Badge, Status } from "@/components/ui/badge";
+import { BarProgress } from "@/components/ui/bar-progress";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label, Textarea } from "@/components/ui/label";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Field } from "@/components/ui/field";
+import { SegmentedTabs } from "@/components/ui/tabs";
+import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Textarea } from "@/components/ui/textarea";
+import { useMemberDirectory } from "@/hooks/use-member-directory";
 import { api } from "@/lib/api";
-import { formatDue } from "@/lib/utils";
-import { TeamOpsError } from "@team-ops/api-client";
+import { errorMessage } from "@/lib/errors";
+import { checklistProgress } from "@/lib/checklist";
+import { useT } from "@/lib/i18n";
+import { PRIORITY_DISPLAY, STATUS_DISPLAY } from "@/lib/task-display";
+import { cn, formatDateTime, formatDue, isOverdue } from "@/lib/utils";
 
 import { ActivityTimeline } from "./activity-timeline";
 import { CommentForm } from "./comment-form";
 import { CommentList } from "./comment-list";
+import { ProofLink } from "./proof-link";
 
 interface TaskDrawerProps {
   task: Task | null;
@@ -26,146 +35,220 @@ interface TaskDrawerProps {
   onUpdated: (task: Task) => void;
 }
 
-export function TaskDrawer({ task, members, open, onOpenChange, onUpdated }: TaskDrawerProps) {
-  const [title, setTitle] = useState(task?.title ?? "");
-  const [description, setDescription] = useState(task?.description ?? "");
-  const [criteria, setCriteria] = useState(task?.acceptanceCriteria ?? "");
+type Draft = Pick<Task, "title" | "description" | "acceptanceCriteria">;
 
-  useEffect(() => {
-    if (!task) return;
-    setTitle(task.title);
-    setDescription(task.description);
-    setCriteria(task.acceptanceCriteria);
-  }, [task]);
+const draftOf = (task: Task | null): Draft => ({
+  title: task?.title ?? "",
+  description: task?.description ?? "",
+  acceptanceCriteria: task?.acceptanceCriteria ?? "",
+});
+
+export function TaskDrawer({ task, members, open, onOpenChange, onUpdated }: TaskDrawerProps) {
+  const t = useT();
+  const queryClient = useQueryClient();
+  const directory = useMemberDirectory(members);
+  const [draft, setDraft] = useState<Draft>(() => draftOf(task));
+  const [tab, setTab] = useState<"comments" | "activity">("comments");
+
+  // Reset the form whenever another task (or a newer version of it) is shown.
+  useEffect(() => setDraft(draftOf(task)), [task]);
 
   const comments = useQuery({
     queryKey: ["comments", task?.id],
     queryFn: () => api.listComments(task!.id),
-    enabled: Boolean(task),
+    enabled: Boolean(task) && open,
   });
   const activities = useQuery({
     queryKey: ["activities", task?.id],
     queryFn: () => api.listActivities(task!.id),
-    enabled: Boolean(task),
+    enabled: Boolean(task) && open,
   });
 
   const save = useMutation({
-    mutationFn: async () => {
-      if (!task) return;
-      return api.updateTask(task.id, {
-        title,
-        description,
-        acceptanceCriteria: criteria,
-        expectedVersion: task.version,
-      });
-    },
+    mutationFn: (current: Task) => api.updateTask(current.id, { ...draft, expectedVersion: current.version }),
     onSuccess: (updated) => {
-      if (updated) onUpdated(updated);
-      toast.success("Task saved");
+      onUpdated(updated);
+      toast.success(t("Task saved"));
     },
-    onError: (error) =>
-      toast.error(error instanceof TeamOpsError ? error.message : "Could not save task"),
+    onError: (error) => toast.error(errorMessage(error, t("Could not save task"))),
   });
 
   const archive = useMutation({
-    mutationFn: async () => {
-      if (!task) return;
-      await api.archiveTask(task.id, { expectedVersion: task.version });
-    },
+    mutationFn: (current: Task) => api.archiveTask(current.id, { expectedVersion: current.version }),
     onSuccess: () => {
-      toast.success("Task archived");
+      void queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      void queryClient.invalidateQueries({ queryKey: ["timeline-tasks"] });
+      toast.success(t("Task archived"));
       onOpenChange(false);
     },
+    onError: (error) => toast.error(errorMessage(error, t("Could not archive task"))),
   });
 
   if (!task) return null;
 
-  const assignee = members.find((m) => m.userId === task.assigneeId);
+  const assignee = directory.get(task.assigneeId);
+  const dirty =
+    draft.title !== task.title ||
+    draft.description !== task.description ||
+    draft.acceptanceCriteria !== task.acceptanceCriteria;
+  const status = STATUS_DISPLAY[task.status];
+  const priority = PRIORITY_DISPLAY[task.priority];
+  // Follows the draft, so ticking a box in the text updates the bar at once.
+  const checklist = checklistProgress(draft.description, draft.acceptanceCriteria);
 
   return (
-    <Sheet
-      open={open}
-      onOpenChange={(next) => {
-        if (next && task) {
-          setTitle(task.title);
-          setDescription(task.description);
-          setCriteria(task.acceptanceCriteria);
-        }
-        onOpenChange(next);
-      }}
-    >
-      <SheetContent>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent onOpenAutoFocus={(e) => e.preventDefault()}>
         <SheetHeader>
-          <p className="text-muted-foreground font-mono text-xs">{task.key}</p>
-          <SheetTitle>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} className="text-lg font-semibold" />
+          <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
+            {task.key}
+            <span aria-hidden="true">·</span>
+            <span className="font-sans">{task.projectName}</span>
+          </div>
+          <SheetTitle asChild>
+            <input
+              aria-label={t("Title")}
+              value={draft.title}
+              onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+              className="text-foreground/90 -mx-1.5 rounded-md px-1.5 py-0.5 text-base font-medium tracking-tight outline-none hover:bg-primary/5 focus-visible:bg-primary/5"
+            />
           </SheetTitle>
+          <SheetDescription className="sr-only">{t("Task details, comments and activity")}</SheetDescription>
         </SheetHeader>
-        <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 pb-8">
-          <section className="grid grid-cols-2 gap-3 text-sm">
-            <Meta label="Organization" value={task.organizationId.slice(0, 8)} />
-            <Meta label="Project" value={`${task.projectKey} · ${task.projectName}`} />
-            <Meta label="Status" value={task.status.replace("_", " ")} />
-            <div>
-              <p className="text-muted-foreground mb-1 text-xs">Priority</p>
-              <Badge
-                variant={
-                  task.priority === "high"
-                    ? "destructive-outline"
-                    : task.priority === "medium"
-                      ? "primary-outline"
-                      : "warning-outline"
-                }
-              >
-                {task.priority}
-              </Badge>
-            </div>
-            <Meta label="Assignee" value={assignee?.name ?? "Unassigned"} />
-            <Meta label="Due" value={formatDue(task.dueDate) ?? "—"} />
-            <Meta label="Source" value={task.source} />
-            <Meta label="External ref" value={task.externalRef ?? "—"} />
-            <Meta label="Created" value={new Date(task.createdAt).toLocaleString()} />
-            <Meta label="Updated" value={new Date(task.updatedAt).toLocaleString()} />
-          </section>
+
+        <SheetBody>
           {task.blocked ? (
-            <p className="text-destructive text-sm">Blocked: {task.blockedReason}</p>
+            <div className="flex gap-3 rounded-lg bg-rose-50 p-3 text-sm text-[#c2410c] dark:bg-red-500/15 dark:text-red-400">
+              <OctagonAlertIcon className="mt-0.5 size-4 shrink-0" />
+              <p>
+                <span className="font-semibold">{t("Blocked.")}</span> {task.blockedReason}
+              </p>
+            </div>
           ) : null}
-          <div className="space-y-2">
-            <Label>Description</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>Acceptance criteria</Label>
-            <Textarea value={criteria} onChange={(e) => setCriteria(e.target.value)} />
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={() => save.mutate()} disabled={save.isPending}>
-              Save
+
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
+            <Property label={t("Status")}>
+              <Status color={status.color}>{t(status.label)}</Status>
+            </Property>
+            <Property label={t("Priority")}>
+              <Status color={priority.color}>{t(priority.label)}</Status>
+            </Property>
+            <Property label={t("Assignee")}>
+              {assignee ? (
+                <span className="flex items-center gap-2">
+                  <UserAvatar name={assignee.name} src={assignee.avatarUrl} size="xs" />
+                  {assignee.name}
+                </span>
+              ) : (
+                <span className="text-muted-foreground">{t("Unassigned")}</span>
+              )}
+            </Property>
+            <Property label={t("Due date")}>
+              <span className={cn(isOverdue(task.dueDate, task.status) && "text-destructive font-medium")}>
+                {formatDue(task.dueDate) ?? "—"}
+              </span>
+            </Property>
+            <Property label={t("Source")}>
+              {task.source === "ai" ? (
+                <Badge color="purple">
+                  <BotIcon />
+                  {t("Coding agent")}
+                </Badge>
+              ) : (
+                t("Manual")
+              )}
+            </Property>
+            {task.externalRef ? (
+              <Property label={t("External ref")}>
+                <span className="font-mono text-xs">{task.externalRef}</span>
+              </Property>
+            ) : null}
+            {task.proof ? (
+              <Property label={t("Proof")}>
+                <ProofLink proof={task.proof} />
+              </Property>
+            ) : null}
+            <Property label={t("Created")}>{formatDateTime(task.createdAt)}</Property>
+            <Property label={t("Updated")}>{formatDateTime(task.updatedAt)}</Property>
+          </dl>
+
+          {checklist.total > 0 ? (
+            <BarProgress
+              label={t("Checklist")}
+              value={`${checklist.done}/${checklist.total}`}
+              progress={checklist.done}
+              max={checklist.total}
+            />
+          ) : null}
+
+          <Field label={t("Description")} htmlFor="task-description">
+            <Textarea
+              id="task-description"
+              placeholder={t("Add a description…")}
+              value={draft.description}
+              onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+            />
+          </Field>
+          <Field label={t("Acceptance criteria")} htmlFor="task-criteria">
+            <Textarea
+              id="task-criteria"
+              placeholder={t("What has to be true for this to be done?\n- [ ] One check per line")}
+              value={draft.acceptanceCriteria}
+              onChange={(e) => setDraft({ ...draft, acceptanceCriteria: e.target.value })}
+            />
+          </Field>
+
+          <section className="flex flex-col gap-4 border-t pt-5">
+            <SegmentedTabs
+              label={t("Task feed")}
+              value={tab}
+              onChange={setTab}
+              options={[
+                { value: "comments", label: t("Comments"), count: comments.data?.length },
+                { value: "activity", label: t("Activity") },
+              ]}
+            />
+            {tab === "comments" ? (
+              <>
+                <CommentList comments={comments.data ?? []} members={directory.byId} />
+                <CommentForm
+                  taskId={task.id}
+                  onCreated={() => {
+                    void comments.refetch();
+                    void activities.refetch();
+                  }}
+                />
+              </>
+            ) : (
+              <ActivityTimeline activities={activities.data ?? []} members={directory.byId} />
+            )}
+          </section>
+        </SheetBody>
+
+        <SheetFooter className="flex-col items-stretch sm:flex-row sm:items-center sm:justify-between">
+          <Button variant="destructive-secondary" onClick={() => archive.mutate(task)} disabled={archive.isPending}>
+            <ArchiveIcon />
+            {t("Archive")}
+          </Button>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="secondary" disabled={!dirty} onClick={() => setDraft(draftOf(task))}>
+              {t("Discard")}
             </Button>
-            <Button variant="outline" onClick={() => archive.mutate()}>
-              Archive
+            <Button onClick={() => save.mutate(task)} disabled={!dirty || !draft.title.trim() || save.isPending}>
+              {save.isPending ? t("Saving…") : t("Save changes")}
             </Button>
           </div>
-          <CommentList comments={comments.data ?? []} members={members} />
-          <CommentForm
-            taskId={task.id}
-            onCreated={() => {
-              void comments.refetch();
-              void activities.refetch();
-            }}
-          />
-          <ActivityTimeline activities={activities.data ?? []} members={members} />
-        </div>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   );
 }
 
-function Meta({ label, value }: { label: string; value: string }) {
+function Property({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div>
-      <p className="text-muted-foreground mb-1 text-xs">{label}</p>
-      <p className="truncate">{value}</p>
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <dt className="text-muted-foreground text-xs font-medium">{label}</dt>
+      <dd className="text-foreground flex min-h-6 min-w-0 items-center truncate text-sm font-medium">{children}</dd>
     </div>
   );
 }

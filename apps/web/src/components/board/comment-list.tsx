@@ -1,32 +1,45 @@
 "use client";
 
 import type { Comment, Member } from "@team-ops/api-client";
+import { BotIcon } from "lucide-react";
 
-export function CommentList({ comments, members }: { comments: Comment[]; members: Member[] }) {
-  const names = Object.fromEntries(members.map((m) => [m.userId, m.name]));
+import { UserAvatar } from "@/components/ui/avatar";
+import { useT } from "@/lib/i18n";
+import { formatDateTime } from "@/lib/utils";
+
+import { actorName } from "./actor";
+
+export function CommentList({ comments, members }: { comments: Comment[]; members: Map<string, Member> }) {
+  const t = useT();
+  if (comments.length === 0) {
+    return <p className="text-subtle-foreground text-sm">{t("No comments yet.")}</p>;
+  }
   return (
-    <section>
-      <h3 className="mb-3 text-sm font-semibold">Comments</h3>
-      <ul className="space-y-3">
-        {comments.map((comment) => (
-          <li key={comment.id} className="text-sm">
-            <p className="font-medium">
-              {comment.authorType === "agent"
-                ? "Agent"
-                : comment.authorId
-                  ? (names[comment.authorId] ?? "Someone")
-                  : "System"}
-              <span className="text-muted-foreground ml-2 text-xs">
-                {new Date(comment.createdAt).toLocaleString()}
+    <ul className="flex flex-col gap-5">
+      {comments.map((comment) => {
+        const name = actorName(comment.authorType, comment.authorId, members);
+        const author = comment.authorId ? members.get(comment.authorId) : undefined;
+        return (
+          <li key={comment.id} className="flex gap-3">
+            {comment.authorType === "agent" ? (
+              <span className="bg-brand/10 text-brand flex size-8 shrink-0 items-center justify-center rounded-full">
+                <BotIcon className="size-4" />
               </span>
-            </p>
-            <p className="whitespace-pre-wrap">{comment.content}</p>
+            ) : (
+              <UserAvatar name={name} src={author?.avatarUrl} size="sm" />
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="flex items-baseline gap-2 text-sm">
+                <span className="text-foreground font-semibold">{name}</span>
+                <time className="text-subtle-foreground text-xs" dateTime={comment.createdAt}>
+                  {formatDateTime(comment.createdAt)}
+                </time>
+              </p>
+              <p className="text-secondary-foreground mt-1 text-sm whitespace-pre-wrap">{comment.content}</p>
+            </div>
           </li>
-        ))}
-        {comments.length === 0 ? (
-          <li className="text-muted-foreground text-sm">No comments yet.</li>
-        ) : null}
-      </ul>
-    </section>
+        );
+      })}
+    </ul>
   );
 }

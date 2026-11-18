@@ -1,44 +1,51 @@
 "use client";
 
-import type { Member, Project } from "@team-ops/api-client";
+import type { Priority } from "@team-ops/api-client";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { SquarePenIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader } from "@/components/ui/dialog";
+import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label, Textarea } from "@/components/ui/label";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
-import { TeamOpsError } from "@team-ops/api-client";
+import { errorMessage } from "@/lib/errors";
+import { useT } from "@/lib/i18n";
+import { PRIORITIES, PRIORITY_DISPLAY } from "@/lib/task-display";
+import { useWorkspace } from "@/providers/workspace-provider";
 
+/** "New task" modal. Defaults to the project the board is filtered on. */
 export function TaskForm({
   open,
   onOpenChange,
-  organizationId,
-  projects,
-  members,
   defaultProjectId,
   onCreated,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  organizationId: string;
-  projects: Project[];
-  members: Member[];
   defaultProjectId?: string;
   onCreated: () => void;
 }) {
+  const t = useT();
+  const { orgId, projects, members } = useWorkspace();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [projectId, setProjectId] = useState(defaultProjectId ?? projects[0]?.id ?? "");
-  const [priority, setPriority] = useState("medium");
+  const [projectId, setProjectId] = useState("");
+  const [priority, setPriority] = useState<Priority>("medium");
   const [assigneeId, setAssigneeId] = useState("");
+
+  useEffect(() => {
+    if (open) setProjectId(defaultProjectId || projects[0]?.id || "");
+  }, [open, defaultProjectId, projects]);
 
   const mutation = useMutation({
     mutationFn: () =>
       api.createTask({
-        organizationId,
+        organizationId: orgId!,
         projectId,
         title,
         description,
@@ -46,86 +53,97 @@ export function TaskForm({
         assigneeId: assigneeId || undefined,
       }),
     onSuccess: () => {
-      toast.success("Task created");
+      toast.success(t("Task created"));
       setTitle("");
       setDescription("");
+      setAssigneeId("");
       onCreated();
       onOpenChange(false);
     },
-    onError: (error) =>
-      toast.error(error instanceof TeamOpsError ? error.message : "Could not create task"),
+    onError: (error) => toast.error(errorMessage(error, t("Could not create task"))),
   });
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>New task</SheetTitle>
-        </SheetHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
         <form
-          className="flex flex-col gap-4 px-6"
+          className="flex min-h-0 flex-col"
           onSubmit={(e) => {
             e.preventDefault();
             mutation.mutate();
           }}
         >
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
-            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>Project</Label>
-            <select
-              className="border-input bg-background h-9 w-full rounded-md border px-2 text-sm"
-              value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
-              required
-            >
-              {projects.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.key} · {project.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label>Priority</Label>
-              <select
-                className="border-input bg-background h-9 w-full rounded-md border px-2 text-sm"
-                value={priority}
-                onChange={(e) => setPriority(e.target.value)}
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label>Assignee</Label>
-              <select
-                className="border-input bg-background h-9 w-full rounded-md border px-2 text-sm"
-                value={assigneeId}
-                onChange={(e) => setAssigneeId(e.target.value)}
-              >
-                <option value="">Unassigned</option>
-                {members.map((member) => (
-                  <option key={member.userId} value={member.userId}>
-                    {member.name}
+          <DialogHeader
+            icon={<SquarePenIcon />}
+            title={t("New task")}
+            description={t("Add a card to the backlog. Agents and teammates pick it up from there.")}
+          />
+          <DialogBody>
+            <Field label={t("Title")} htmlFor="task-title">
+              <Input
+                id="task-title"
+                placeholder={t("What needs to be done?")}
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                autoFocus
+              />
+            </Field>
+            <Field label={t("Description")} htmlFor="task-description-new">
+              <Textarea
+                id="task-description-new"
+                placeholder={t("Context, links, constraints…")}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </Field>
+            <Field label={t("Project")} htmlFor="task-project">
+              <Select id="task-project" value={projectId} onChange={(e) => setProjectId(e.target.value)} required>
+                {projects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.key} · {project.name}
                   </option>
                 ))}
-              </select>
+              </Select>
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label={t("Priority")} htmlFor="task-priority">
+                <Select
+                  id="task-priority"
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value as Priority)}
+                >
+                  {PRIORITIES.map((p) => (
+                    <option key={p} value={p}>
+                      {t(PRIORITY_DISPLAY[p].label)}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label={t("Assignee")} htmlFor="task-assignee">
+                <Select id="task-assignee" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
+                  <option value="">{t("Unassigned")}</option>
+                  {members.map((member) => (
+                    <option key={member.userId} value={member.userId}>
+                      {member.name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
             </div>
-          </div>
-          <Button type="submit" disabled={!title || !projectId || mutation.isPending}>
-            Create task
-          </Button>
+          </DialogBody>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="secondary" size="md">
+                {t("Cancel")}
+              </Button>
+            </DialogClose>
+            <Button type="submit" size="md" disabled={!title.trim() || !projectId || mutation.isPending}>
+              {mutation.isPending ? t("Creating…") : t("Create task")}
+            </Button>
+          </DialogFooter>
         </form>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
