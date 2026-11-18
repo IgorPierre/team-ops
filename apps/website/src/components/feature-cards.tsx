@@ -32,7 +32,7 @@ export function FeatureCards({ copy }: { copy: Messages["features"] }) {
             <CardFooter>
               <div className="flex flex-row flex-wrap items-center gap-x-5 gap-y-3 md:gap-x-6">
                 {CLIS.filter((cli) => cli.name !== "OpenCode" && cli.name !== "Qwen").map((cli) => (
-                  <span key={cli.name} className="flex items-center gap-2 opacity-55 transition-opacity duration-300 hover:opacity-100">
+                  <span key={cli.name} className="flex items-center gap-2">
                     <Image
                       src={cli.src}
                       alt=""

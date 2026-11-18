@@ -74,13 +74,15 @@ export function SiteNav() {
         </nav>
         <div className="flex min-w-0 items-center justify-self-end gap-2">
           <LocaleSwitcher className="hidden sm:flex" />
-          <ThemeToggle className="hidden lg:inline-flex" />
-          <Button variant="text" href={GITHUB} className="hidden lg:inline-flex">
-            {t.nav.source}
-          </Button>
-          <Button variant="accent" href={GITHUB} className="hidden lg:inline-flex">
-            {t.nav.runIt}
-          </Button>
+          <div className="hidden items-center gap-2 lg:flex">
+            <ThemeToggle />
+            <Button variant="text" href={GITHUB}>
+              {t.nav.source}
+            </Button>
+            <Button variant="accent" href={GITHUB}>
+              {t.nav.runIt}
+            </Button>
+          </div>
           <button
             type="button"
             className={cn(

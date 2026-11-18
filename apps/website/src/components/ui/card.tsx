@@ -25,7 +25,7 @@ export function Card({
       )}
       {...props}
     >
-      {background ? <div className="absolute inset-0 z-0">{background}</div> : null}
+      {background ? <div className="pointer-events-none absolute inset-0 z-0">{background}</div> : null}
       <div className={cn("relative z-10 flex h-full min-h-[210px] flex-col p-4 sm:p-6 lg:p-8", contentClassName)}>
         {children}
       </div>
@@ -45,7 +45,7 @@ export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingEle
 export function CardBody({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("mt-3 max-w-[46ch] text-[clamp(1rem,2.5vw,1.175rem)] leading-relaxed sm:mt-4", className)}
+      className={cn("mt-3 max-w-[46ch] text-[clamp(1rem,2.5vw,1.075rem)] leading-relaxed sm:mt-4", className)}
       {...props}
     />
   );

@@ -41,10 +41,10 @@ export const pt: Messages = {
   },
   agents: {
     title: "Peça ao agente, veja o card andar",
-    lead: "Aponte o MCP para a sua instância. O adapter fala só com a sua API, nunca com o PostgreSQL",
+    lead: "Adicione a URL MCP da sua instância e faça login. O servidor fala só com a sua API, nunca com o PostgreSQL",
     tryItOut: "Copie isto",
-    needs: "Precisa de `TEAM_OPS_URL` e `TEAM_OPS_TOKEN`. O adapter nunca fala com o PostgreSQL.",
-    runStackFirst: "Suba o stack primeiro",
+    needs: "Só precisa da URL do seu Team-Ops. O editor faz login pelo navegador (OAuth); nada de chave para copiar.",
+    runStackFirst: "Inicie a instância primeiro",
     terminal: "Terminal",
     caption:
       "Peça ao agente para pegar o ERP-142. Ele move o card e registra o progresso. O time vê sem standup.",
@@ -62,15 +62,15 @@ export const pt: Messages = {
       "O MCP lista, cria e move trabalho pela mesma API Go que a UI usa. Nunca fala com o PostgreSQL. Mantenha o agente de código que você já paga.",
     bTitle: "Conflito não sobrescreve em silêncio",
     bBody:
-      "Toda task tem uma versão. Updates enviam `expectedVersion`. Um conflito devolve `TASK_VERSION_CONFLICT` e o quadro desfaz o move otimista.",
+      "Toda tarefa tem uma versão. As atualizações enviam `expectedVersion`. Um conflito devolve `TASK_VERSION_CONFLICT` e o quadro desfaz a movimentação.",
     bCta: "Ver como o quadro funciona",
-    cTitle: "Seu Postgres, uma env var",
+    cTitle: "Seu Postgres, uma variável de ambiente",
     cBody:
-      "Docker, RDS, Cloud SQL, Neon, Supabase. Defina `DATABASE_URL`. O app nunca depende de uma cloud Team-Ops ou de um control plane hospedado.",
+      "Docker, RDS, Cloud SQL, Neon, Supabase. Defina `DATABASE_URL`. O app nunca depende de uma cloud Team-Ops ou de um serviço central hospedado.",
     cCta: "Usar o seu banco",
-    dTitle: "MIT. Sem conta, sem cloud",
+    dTitle: "MIT. Sem conta central",
     dBody:
-      "Faça fork, hospede, aplique patch. Sem login central. API keys com hash. Senhas com Argon2id. Coloque TLS na frente com o reverse proxy que você já usa.",
+      "Faça fork, hospede, aplique patch. Sem login central. Tokens com hash. Senhas com Argon2id. Coloque TLS na frente com o reverse proxy que você já usa.",
     dCta: "Abrir o repo",
   },
   faq: {
@@ -85,12 +85,12 @@ export const pt: Messages = {
         a: "Onde o Postgres 15+ rodar: Docker Compose, RDS, Cloud SQL, Neon, Supabase, Railway, uma VM. Defina DATABASE_URL. Essa é a integração inteira.",
       },
       {
-        q: "Como os agentes autenticam?",
-        a: "Crie um agente no app web e emita uma key que começa com tops_sk_. A API guarda um hash, nunca o segredo. O MCP só precisa de TEAM_OPS_URL e TEAM_OPS_TOKEN.",
+        q: "Como os agentes se autenticam?",
+        a: "Cada dev adiciona sua-instancia/mcp no editor e entra com a conta do Team-Ops (OAuth com PKCE). Os tokens agem em nome daquele dev e ficam com hash. Desconecte um editor quando quiser em Configurações → Agentes.",
       },
       {
         q: "Duas pessoas podem editar o mesmo card?",
-        a: "Sim. O conflito aparece. Updates incluem expectedVersion. Se o card andou por baixo, a API devolve TASK_VERSION_CONFLICT e a UI desfaz.",
+        a: "Sim. Se outra pessoa já alterou o card, o quadro avisa sobre o conflito e desfaz a sua movimentação para preservar a alteração anterior.",
       },
       {
         q: "Por que só quatro colunas?",

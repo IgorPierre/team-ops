@@ -2,6 +2,7 @@
 
 import { GithubIcon } from "lucide-react";
 
+import { CipherReach } from "@/components/cipher-reach";
 import { ScrollExpand } from "@/components/scroll-expand";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/provider";
@@ -14,8 +15,7 @@ export function CtaExpand() {
   return (
     <section className={`${wrap} relative pt-2 pb-10 sm:pt-20 sm:pb-16`} aria-label={t.cta.title}>
       <ScrollExpand
-        src="/two-hands.jpeg"
-        alt=""
+        media={<CipherReach />}
         title={
           <>
             {t.cta.titleLines.map((line) => (
@@ -23,7 +23,6 @@ export function CtaExpand() {
             ))}
           </>
         }
-        scrollHint={t.cta.scrollHint}
         useWindowScroll
         stageHeight={460}
         startWidth={36}
@@ -37,7 +36,7 @@ export function CtaExpand() {
         overlayScrim={1}
       >
         <p
-          className="mt-4 max-w-[36ch] font-display text-[clamp(0.9375rem,3.5vw,1.5rem)] leading-[1.45] sm:mt-10 sm:leading-[1.4]"
+          className="media-copy max-w-[42ch] text-[clamp(1rem,2.5vw,1.25rem)] leading-[1.5]"
           style={{ color: "#fff", opacity: 1 }}
         >
           {t.cta.subtitle}

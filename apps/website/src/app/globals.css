@@ -130,3 +130,29 @@ html[data-preloading] body {
     text-decoration: none;
   }
 }
+
+/* Keep the display face for headings; use a quieter face for reading. */
+@theme {
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --color-accent-readable: oklch(48% 0.12 162);
+  --color-media-shade: oklch(0% 0 0 / 0.38);
+  --color-media-shadow: oklch(0% 0 0 / 0.8);
+  --color-media-shade-soft: oklch(0% 0 0 / 0.08);
+}
+
+.dark {
+  --color-accent-readable: oklch(76% 0.15 162);
+}
+
+.hero-shade {
+  background: linear-gradient(90deg, var(--color-media-shade), var(--color-media-shade-soft));
+}
+
+.media-copy {
+  text-shadow: 0 2px 10px var(--color-media-shadow);
+}
+
+@theme inline {
+  --font-display: var(--font-display-face), "Instrument Serif", ui-serif, Georgia, serif;
+  --font-mono: var(--font-mono-face), ui-monospace, monospace;
+}

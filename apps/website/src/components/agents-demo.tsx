@@ -132,7 +132,7 @@ export function AgentsDemo() {
             {t.agents.tryItOut}
           </span>
           <CopyableCommand
-            command="npx -y @team-ops/mcp"
+            command="claude mcp add --transport http team-ops https://your-team-ops/mcp"
             className="min-w-0 flex-1"
             copiedLabel={t.agents.copied}
             copyLabel={t.agents.copy}

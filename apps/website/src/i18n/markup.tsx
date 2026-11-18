@@ -14,14 +14,14 @@ export function InlineMarkup({ text }: { text: string }) {
     }
     if (chunk.startsWith("==") && chunk.endsWith("==")) {
       return (
-        <mark key={i} className="bg-transparent text-accent">
+        <mark key={i} className="bg-transparent text-accent-readable">
           {chunk.slice(2, -2)}
         </mark>
       );
     }
     if (chunk.startsWith("`") && chunk.endsWith("`")) {
       return (
-        <code key={i} className="font-mono text-accent">
+        <code key={i} className="wrap-anywhere font-mono text-[0.9em] text-accent-readable">
           {chunk.slice(1, -1)}
         </code>
       );

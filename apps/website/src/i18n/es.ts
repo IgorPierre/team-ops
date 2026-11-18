@@ -41,9 +41,9 @@ export const es: Messages = {
   },
   agents: {
     title: "Pídeselo al agente, mira moverse la tarjeta",
-    lead: "Apunta MCP a tu instancia. El adapter habla solo con tu API, nunca con PostgreSQL",
+    lead: "Agrega la URL MCP de tu instancia e inicia sesión. El servidor habla solo con tu API, nunca con PostgreSQL",
     tryItOut: "Copia esto",
-    needs: "Necesita `TEAM_OPS_URL` y `TEAM_OPS_TOKEN`. El adapter nunca habla con PostgreSQL.",
+    needs: "Solo necesita la URL de tu Team-Ops. El editor inicia sesión en el navegador (OAuth); sin keys que copiar.",
     runStackFirst: "Levanta el stack primero",
     terminal: "Terminal",
     caption:
@@ -68,9 +68,9 @@ export const es: Messages = {
     cBody:
       "Docker, RDS, Cloud SQL, Neon, Supabase. Define `DATABASE_URL`. La app nunca depende de una cloud Team-Ops ni de un control plane hospedado.",
     cCta: "Usa tu base de datos",
-    dTitle: "MIT. Sin cuenta, sin cloud",
+    dTitle: "MIT. Sin cuenta central",
     dBody:
-      "Haz fork, hospeda, parchea. Sin login central. API keys con hash. Contraseñas con Argon2id. Pon TLS delante con el reverse proxy que ya usas.",
+      "Haz fork, hospeda, parchea. Sin login central. Tokens con hash. Contraseñas con Argon2id. Pon TLS delante con el reverse proxy que ya usas.",
     dCta: "Abrir el repo",
   },
   faq: {
@@ -86,7 +86,7 @@ export const es: Messages = {
       },
       {
         q: "¿Cómo se autentican los agentes?",
-        a: "Crea un agente en la app web y emite una key que empieza con tops_sk_. La API guarda un hash, nunca el secreto. MCP solo necesita TEAM_OPS_URL y TEAM_OPS_TOKEN.",
+        a: "Cada dev agrega tu-instancia/mcp a su editor e inicia sesión con su cuenta de Team-Ops (OAuth con PKCE). Los tokens actúan en nombre de ese dev y se guardan con hash. Desconecta un editor cuando quieras en Settings → Agents.",
       },
       {
         q: "¿Dos personas pueden editar la misma tarjeta?",

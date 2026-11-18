@@ -36,8 +36,10 @@ type LiveProps = {
 };
 
 export type ScrollExpandProps = Omit<HTMLAttributes<HTMLDivElement>, "title"> & {
-  src: string;
+  src?: string;
   mediaType?: "image" | "video";
+  /** Custom media (e.g. a canvas) used instead of `src`; zoomed like an image. */
+  media?: ReactNode;
   poster?: string;
   alt?: string;
   title?: ReactNode;
@@ -61,6 +63,7 @@ export type ScrollExpandProps = Omit<HTMLAttributes<HTMLDivElement>, "title"> & 
 export function ScrollExpand({
   src,
   mediaType = "image",
+  media: customMedia,
   poster = "",
   alt = "",
   title = "",
@@ -86,7 +89,7 @@ export function ScrollExpand({
   const trackRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
-  const mediaRef = useRef<HTMLImageElement | HTMLVideoElement>(null);
+  const mediaRef = useRef<HTMLElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const scrimRef = useRef<HTMLDivElement>(null);
@@ -143,7 +146,7 @@ export function ScrollExpand({
 
     media.style.transform = `scale(${c.mediaZoom + (1 - c.mediaZoom) * e})`;
 
-    if (scrimRef.current) scrimRef.current.style.opacity = `${c.overlayScrim * e}`;
+    if (scrimRef.current) scrimRef.current.style.opacity = `${c.overlayScrim}`;
 
     if (titleRef.current) {
       const toRow = smoothstep(0.28, 0.78, p);
@@ -156,7 +159,7 @@ export function ScrollExpand({
       const beside = clamp(stageW * 0.042, 28, 52);
       const rowBlend = narrow ? 0 : toRow;
       el.style.fontSize = `${stacked + (beside - stacked) * rowBlend}px`;
-      el.style.transform = narrow ? "none" : `translate3d(0, ${-48 * toRow}px, 0)`;
+      el.style.transform = "none";
       el.style.lineHeight = narrow ? "1.12" : "1.02";
     }
 
@@ -166,11 +169,7 @@ export function ScrollExpand({
       hintRef.current.style.transform = `translate3d(0, ${8 * gone}px, 0)`;
     }
 
-    if (overlayRef.current) {
-      const inn = smoothstep(0.68, 1, p);
-      overlayRef.current.style.visibility = inn > 0.08 ? "visible" : "hidden";
-      overlayRef.current.style.transform = `translate3d(0, ${18 * (1 - inn)}px, 0)`;
-    }
+
   }, []);
 
   useEffect(() => {
@@ -209,7 +208,7 @@ export function ScrollExpand({
       stageH = resolveStageHeight(c);
       if (stageH <= 0) return;
       stage.style.height = `${stageH}px`;
-      const expand = reduceMotion || !c.enabled ? 0 : Math.max(0, c.scrollDistance) + Math.max(0, c.holdDistance);
+      const expand = reduceMotion || !c.enabled || c.useWindowScroll ? 0 : Math.max(0, c.scrollDistance) + Math.max(0, c.holdDistance);
       track.style.height = `${stageH * (1 + expand)}px`;
 
       const w = root.clientWidth || stageH;
@@ -223,7 +222,7 @@ export function ScrollExpand({
       const span = stageH * Math.max(0.01, c.scrollDistance);
       if (c.useWindowScroll) {
         const top = track.getBoundingClientRect().top;
-        return clamp(-top / span, 0, 1);
+        return clamp((window.innerHeight - top) / span, 0, 1);
       }
       return clamp(root.scrollTop / span, 0, 1);
     };
@@ -284,8 +283,16 @@ export function ScrollExpand({
     };
   }, [applyProgress, useWindowScroll]);
 
-  const media =
-    mediaType === "video" ? (
+  const media = customMedia ? (
+    <div
+      ref={(node) => {
+        mediaRef.current = node;
+      }}
+      className="scroll-expand__media"
+    >
+      {customMedia}
+    </div>
+  ) : mediaType === "video" ? (
       <video
         ref={(node) => {
           mediaRef.current = node;

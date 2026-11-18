@@ -30,7 +30,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
 
   return (
     <html lang={HTML_LANG[locale]} suppressHydrationWarning>
-      <body className={`${serif.className} ${serif.variable} ${mono.variable} font-sans antialiased`}>
+      <body className={`${serif.variable} ${mono.variable} font-sans antialiased`}>
         <script
           dangerouslySetInnerHTML={{
             __html: `try{if(!sessionStorage.getItem("team-ops:preloader"))document.documentElement.setAttribute("data-preloading","1")}catch(e){}try{var t=localStorage.getItem("team-ops:theme");var d=t?t==="dark":matchMedia("(prefers-color-scheme: dark)").matches;if(d)document.documentElement.classList.add("dark")}catch(e){}`,

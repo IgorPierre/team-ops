@@ -29,9 +29,10 @@ export function Hero() {
             waveSpeed={0.01}
           />
         </div>
+        <div className="hero-shade pointer-events-none absolute inset-0 z-[1]" aria-hidden="true" />
         <RevealLoad className="pointer-events-none relative z-[1] min-w-0 max-w-5xl px-4 py-6 text-left text-accent-ink sm:px-12 sm:py-10 lg:px-18 lg:py-12">
           <RevealItem>
-            <h1 className="w-full font-display text-[clamp(1.625rem,9vw,6rem)] leading-[1.08] font-normal tracking-[-0.03em] text-accent-ink">
+            <h1 className="media-copy w-full font-display text-[clamp(1.625rem,9vw,6rem)] leading-[1.08] font-normal tracking-[-0.03em] text-accent-ink">
               {t.hero.title1}
               <br />
               {t.hero.title2}
@@ -39,7 +40,7 @@ export function Hero() {
           </RevealItem>
           <RevealItem>
             <p
-              className="mt-3 max-w-[44ch] font-display text-[clamp(0.9375rem,3.8vw,1.85rem)] leading-[1.45] tracking-[-0.02em] sm:mt-5 sm:leading-[1.4]"
+              className="mt-3 media-copy max-w-[44ch] text-[clamp(1rem,2.5vw,1.35rem)] leading-[1.45] tracking-[-0.02em] sm:mt-5 sm:leading-[1.4]"
               style={{ color: "#fff", opacity: 1 }}
             >
               {t.hero.subtitle}
