@@ -39,3 +39,8 @@ generates one). Coding agents use the same public URL as the browser.
 
 Terminate TLS at Caddy, nginx, Traefik, or your load balancer. Set
 `COOKIE_SECURE=true` and `APP_URL=https://your.domain`.
+
+## Vercel + Supabase
+
+See [the deployment guide](vercel-supabase.md) for two Vercel projects (web and
+Go API), the Supabase connection, migrations and first-account setup.

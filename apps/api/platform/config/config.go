@@ -19,12 +19,13 @@ type Config struct {
 	ShutdownWait     time.Duration
 	SessionTTL       time.Duration
 	RegistrationOpen bool
+	MigrateOnStart   bool
 }
 
 func Load() (Config, error) {
 	loadDotEnv()
 	cfg := Config{
-		HTTPAddr:         env("HTTP_ADDR", ":8080"),
+		HTTPAddr:         env("HTTP_ADDR", ":"+env("PORT", "8080")),
 		DatabaseURL:      os.Getenv("DATABASE_URL"),
 		AppURL:           env("APP_URL", "http://localhost:3000"),
 		LogLevel:         env("LOG_LEVEL", "info"),
@@ -34,6 +35,7 @@ func Load() (Config, error) {
 		ShutdownWait:     15 * time.Second,
 		SessionTTL:       30 * 24 * time.Hour,
 		RegistrationOpen: envBool("REGISTRATION_OPEN", false),
+		MigrateOnStart:   envBool("MIGRATE_ON_START", true),
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, fmt.Errorf("DATABASE_URL is required")

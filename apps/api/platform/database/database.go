@@ -13,8 +13,6 @@ func Connect(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 	if err != nil {
 		return nil, fmt.Errorf("parse database url: %w", err)
 	}
-	cfg.MaxConns = 20
-	cfg.MinConns = 2
 	cfg.MaxConnLifetime = time.Hour
 	cfg.HealthCheckPeriod = 30 * time.Second
 

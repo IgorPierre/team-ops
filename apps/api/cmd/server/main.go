@@ -48,9 +48,11 @@ func main() {
 	}
 	defer pool.Close()
 
-	if err := runMigrations(cfg.DatabaseURL, cfg.MigrationsDir); err != nil {
-		log.Error("migrate", slog.String("err", err.Error()))
-		os.Exit(1)
+	if cfg.MigrateOnStart {
+		if err := runMigrations(cfg.DatabaseURL, cfg.MigrationsDir); err != nil {
+			log.Error("migrate", slog.String("err", err.Error()))
+			os.Exit(1)
+		}
 	}
 
 	authSvc := auth.NewService(pool, cfg.CookieName, cfg.CookieSecure, cfg.SessionTTL, cfg.RegistrationOpen, log)
