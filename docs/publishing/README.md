@@ -11,7 +11,10 @@ Team-Ops ships three public npm packages:
 ## Prerequisites
 
 1. npm org `@team-ops` (create at https://www.npmjs.com/org/create)
-2. `NPM_TOKEN` secret in GitHub repo settings (Automation token)
+2. For the existing CI workflow: a granular npm token with publish permissions
+   and the required 2FA configuration, stored as the `NPM_TOKEN` GitHub secret.
+   Classic Automation tokens are not the setup to use. Trusted publishing
+   (OIDC) is an alternative but needs its own workflow configuration.
 3. Git tag `v*` pushed to `main`
 
 ## Release flow
@@ -35,6 +38,10 @@ git push origin v0.1.0
 
 ## Manual publish (first time)
 
+Sign in with `npm login`, verify the account with `npm whoami`, and enable 2FA.
+You must control the `@team-ops` npm organization and the `create-team-ops` name.
+The skill is bundled inside `@team-ops/setup`; it is not a fourth package.
+
 ```bash
 npm install
 npm run build -w @team-ops/mcp
@@ -53,6 +60,10 @@ make smoke-test
 
 This boots Docker Compose, creates a user/org/project/agent, exercises the
 API with an agent token, and runs `@team-ops/setup` in a temp directory.
+
+Publishing the same package version twice fails. If you publish manually, do
+not then trigger the tag workflow for that same version: it would try to publish
+it again. For later automated releases, bump all three package versions first.
 
 ## After publish
 

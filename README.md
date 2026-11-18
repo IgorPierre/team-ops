@@ -1,141 +1,184 @@
-Team-Ops
-========
+[![Team-Ops — Clone it. Run it. Connect an agent.](docs/images/team-ops-cta.jpg)](#quick-start)
 
-The self-hosted engineering board for humans and AI agents.
+# Team-Ops
 
-[Open Source] [Self Hosted] [PostgreSQL] [MCP] [Docker]
+**The self-hosted engineering board for humans and AI agents.**
 
-Team-Ops is a Kanban hub for engineering teams. Humans use a visual board.
-AI agents use the HTTP API and MCP to create, move, and document work. You
-install it on your own infrastructure. There is no required Team-Ops cloud.
+People drag cards. Coding agents update the same board through MCP. Your team
+can follow progress, understand blockers and see what has reached production,
+without copying updates out of a chat.
 
-Why it exists
--------------
+MIT licensed · Your PostgreSQL · Go API · Next.js · MCP with OAuth
 
-Coding agents already write the code. The board still lags behind. Team-Ops
-gives agents a first-class API (optimistic concurrency, idempotent
-`external_ref`, activity history) and keeps the UI simple on purpose.
+[Quick start](#quick-start) · [Connect your agent](#connect-your-agent) ·
+[Vercel + Supabase](docs/deployment/vercel-supabase.md) · [Documentation](#documentation)
 
-Quick start
------------
+## What you get
+
+- **One shared board:** Backlog → In Progress → Review → Done → Production,
+  plus a dedicated **Blocked** column. Dropping a card into Blocked asks for
+  the reason; moving it out resolves the blocker.
+- **Visible blockers:** a Pending items page lists the reason and assignee.
+  Administrators see a counter in the app, refreshed every 30 seconds.
+- **Evidence of delivery:** finished tasks keep a PR, commit, deploy or other
+  link. Work without a link, such as planning, can be explicitly marked as such.
+  Done and Production remain distinct; both count as completed work.
+- **People and timelines:** assigned work, activity history and contribution
+  charts, including work performed by a person's coding agents.
+- **Reports:** completed/created work, AI contributions, cycle time, blockers,
+  overdue tasks, weekly charts, breakdowns by person/project and CSV exports.
+- **Agents on the team:** connect Claude Code, Cursor or VS Code through MCP
+  and browser sign-in. The bundled skill guides task creation, progress,
+  blockers, reviews and completion.
+- **English, Portuguese and Spanish**, with light and dark themes.
+
+The Go API owns permissions and business rules. People and agents use the same
+rules, including version checks that prevent silent overwrites. There is no
+required Team-Ops cloud account. Your chosen AI provider may still receive
+context from your coding agent.
+
+## Quick start
+
+Requires **Git** and **Docker with Compose**. Start from the repository:
+
+```bash
+git clone https://github.com/IgorPierre/team-ops.git
+cd team-ops
+cp .env.example .env
+# Set POSTGRES_PASSWORD in .env before starting.
+docker compose up -d --build
+```
+
+Open **http://localhost:3000/register** and create the first account. It
+bootstraps the instance. With the default `REGISTRATION_OPEN=false`, later
+members join through invitations from **People**. Administrators manage the
+team; developers update work; viewers follow along.
+
+### Optional interactive installer
+
+The npm packages are being prepared for their first public release. Until they
+are published, use the repository instructions above. After publication:
 
 ```bash
 npm create team-ops@latest my-team
 ```
 
-The installer asks what you want (board, AI agents, landing page), which
-database to use (bundled Postgres or your own), the public URL and who can
-sign up, then installs dependencies, initializes git and, if Docker is
-running, builds and starts everything — optionally with demo data.
-
-Skip the questions with flags, e.g.
-`npm create team-ops@latest my-team -- --yes --no-website --start --seed`.
-See `npx create-team-ops --help` for all of them.
-
-Prefer to do it by hand:
+The terminal asks whether to include **AI agents** and the **landing page**, which
+Postgres to use, the public URL and who can register. The board and API are
+always included. The installer can install dependencies, initialize Git and,
+when Docker is available, start the stack with optional demo data.
 
 ```bash
-git clone https://github.com/IgorPierre/team-ops
-cd team-ops
-cp .env.example .env
-docker compose up -d
+# Board + agents, without the marketing landing page
+npm create team-ops@latest my-team -- --no-website
+
+# Include the landing page
+npm create team-ops@latest my-team -- --website
 ```
 
-Open http://localhost:3000. The first account owns the instance; later
-people join with an invite from **People**.
+The landing page lives in `apps/website`; it is separate from the board in
+`apps/web`. Selecting it includes its source, not an automatic public deploy.
+Run `npx create-team-ops@latest --help` for all options. The installer needs
+Node.js 20+; Docker is needed to start its container stack.
 
-How a team uses it
-------------------
+## Connect your agent
 
-1. **Host it once** for the team (`npm create team-ops`, or Docker on any
-   server). Invite people from **People**: developers write the board,
-   viewers (managers, stakeholders) follow it.
-2. **Each developer connects their coding agent** — Claude Code, Cursor or
-   VS Code — to the MCP server your instance hosts at `/mcp`, and signs in
-   with their Team-Ops account in the browser (OAuth). No keys to copy:
+Each developer connects to the instance using their own Team-Ops account.
+Open **Agents** in the app for editor-specific instructions. The MCP URL is
+`https://YOUR-TEAM-OPS/mcp`.
 
-   ```bash
-   claude mcp add --transport http team-ops https://ops.your-company.dev/mcp
-   # then /mcp → team-ops → Authenticate → Allow
-   ```
-
-   Or run `npx @team-ops/setup --url https://ops.your-company.dev` in the repo:
-   it writes the MCP config for Claude Code, Cursor or VS Code, installs the
-   Team-Ops skill and links the repo to a board project in `.team-ops.json`.
-   None of it is secret, so commit it — teammates then only have to sign in.
-   **Settings → Agents** shows the snippet for each editor and who is
-   connected, and disconnects an editor instantly.
-3. **Work as usual.** The skill makes the agent open a card for each task,
-   move it as it goes, and close it with a summary of what changed. Cards are
-   assigned to the developer who owns the agent, so nobody writes cards by hand.
-4. **Managers follow along** on the Board, Timeline, People pages and
-   **Reports**.
-
-Agents use the same URL people open. The MCP server also tells the agent how
-to keep the board current, so it works even before the skill is installed.
-For scripts and CI there is still a stdio binary (`npx @team-ops/mcp`) that
-takes an API key from `TEAM_OPS_TOKEN`.
-
-Timeline, people and reports
-----------------------------
-
-- **Timeline** shows every task on an animated timeline. Filter by person
-  (or unassigned), project and status; order by schedule or by latest
-  update. Filters live in the URL, so a filtered view can be shared.
-- **People → a name** opens that person's page: open/in-flight/shipped/
-  overdue counts, a year of board activity as a heat map that folds into a
-  3D skyline (optionally including their agents' work), and their assigned
-  tasks on a timeline.
-- **Reports** summarizes a period (7/30/90 days, 12 months or custom):
-  completed vs created, share done by AI agents, cycle time (start → done),
-  blocked and overdue work, a weekly chart, breakdowns by person and project,
-  and the list of delivered cards with their completion summaries. Filter by
-  person and project; export tasks or the per-person table as CSV.
-
-Demo data (optional)
---------------------
+For Claude Code:
 
 ```bash
-make db-seed       # from a dev checkout (needs Go)
-make docker-seed   # into the running Docker stack
+claude mcp add --transport http team-ops https://YOUR-TEAM-OPS/mcp
+# In Claude Code: /mcp → team-ops → Authenticate → Allow
 ```
 
-Seed login: `alex@example.com` / `password123` (Northwind Labs → ERP).
-
-Manual MCP config
------------------
-
-If you prefer not to use the setup CLI, see [docs/mcp](docs/mcp/README.md).
-
-External PostgreSQL
--------------------
-
-Set `DATABASE_URL` to any Postgres 15+ instance (RDS, Cloud SQL, Neon,
-Supabase, Railway, …). Disable the bundled database:
+For the skill and project configuration, after the setup package is published,
+run this inside the repository where you do your coding:
 
 ```bash
-docker compose -f docker-compose.yml -f deploy/examples/docker-compose.external-db.yml up -d
+npx @team-ops/setup@latest --url https://YOUR-TEAM-OPS
 ```
 
-Docs
-----
+The setup CLI writes the editor's MCP configuration, installs the
+[Team-Ops skill](skills/team-ops/SKILL.md) and links the repository using
+`.team-ops.json`. Restart the editor and sign in. The generated configuration
+contains no credentials and can be committed for teammates to reuse.
+
+The skill guides the agent to open or pick up a card, update its checklist,
+report meaningful progress, explain blockers and finish with a summary and
+evidence. Tasks created by an agent are assigned to its developer. Production
+is for finished work that has actually been deployed. Set `autoUpdate: false`
+in `.team-ops.json` to update the board only when asked.
+
+The hosted MCP also supplies workflow instructions. You can connect it before
+installing the skill. **Agents** shows connected editors and lets an owner or
+administrator disconnect them. Scripts and CI can use `@team-ops/mcp` over
+stdio with an API key; see the [MCP guide](docs/mcp/README.md).
+
+## Deploy your own instance
+
+Choose either deployment path:
+
+- **Docker on a server:** deploy the API and web containers, configure HTTPS
+  and your database. Follow the [deployment guide](docs/deployment/README.md).
+- **Vercel + Supabase:** create two Vercel projects — `apps/web` for Next.js
+  and `apps/api` for Go — and use Supabase as PostgreSQL. Follow the
+  [step-by-step guide](docs/deployment/vercel-supabase.md) for environment
+  variables, database access, migrations and the first administrator account.
+  The optional landing page is a separate `apps/website` Vercel project.
+
+Supabase is the database host; Team-Ops continues to own authentication and
+permissions. No Supabase browser keys are needed. Run schema migrations before
+serverless deployments and keep demo data out of production.
+
+For another PostgreSQL 15+ host (Neon, RDS, Cloud SQL, Railway, etc.), see
+[external PostgreSQL](docs/deployment/external-postgres.md).
+
+## Try demo data locally
+
+```bash
+make docker-seed  # running Docker stack
+# Or: make db-seed — local development API, requires Go and DATABASE_URL
+```
+
+Sign in with **alex@example.com / password123** and select **Northwind Labs →
+ERP**. The standard seed includes projects, people, tasks, comments and blockers.
+Do not run it against a production database.
+
+## Documentation
 
 - [Getting started](docs/getting-started/README.md)
 - [Architecture](docs/architecture/README.md)
-- [API](docs/api/README.md)
-- [MCP](docs/mcp/README.md)
+- [HTTP API](docs/api/README.md) and [OpenAPI specification](openapi/openapi.yaml)
+- [MCP and agent setup](docs/mcp/README.md)
 - [Deployment](docs/deployment/README.md)
+- [Vercel + Supabase](docs/deployment/vercel-supabase.md)
 - [Security](docs/security/README.md)
-- [Publishing npm packages](docs/publishing/README.md) (maintainers)
+- [Publishing npm packages](docs/publishing/README.md) — maintainers
+- [Contributing](CONTRIBUTING.md)
 
-Verify before release
----------------------
+## Development checks
 
 ```bash
-make smoke-test
+npm ci
+npm test
+npm run typecheck
+npm run lint
 ```
 
-License
--------
+Run API tests against a migrated test database, not your production database:
 
-MIT
+```bash
+cd apps/api
+# Set TEST_DATABASE_URL securely in your shell.
+go test ./...
+```
+
+API integration tests are skipped when no database URL is configured. For the
+Docker-based end-to-end check, run `make smoke-test`.
+
+## License
+
+[MIT](LICENSE)
