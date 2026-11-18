@@ -1,11 +1,12 @@
 # Publishing
 
-Team-Ops ships two public npm packages:
+Team-Ops ships three public npm packages:
 
 | Package | Purpose |
 |---------|---------|
 | `@team-ops/mcp` | MCP stdio server (API adapter) |
 | `@team-ops/setup` | Install skill + MCP config + `.team-ops.json` |
+| `create-team-ops` | `npm create team-ops` — interactive instance scaffolder |
 
 ## Prerequisites
 
@@ -20,9 +21,14 @@ Pushing a version tag triggers [.github/workflows/release.yml](../../.github/wor
 1. Builds and pushes Docker images to `ghcr.io`
 2. Publishes `@team-ops/mcp`
 3. Publishes `@team-ops/setup`
+4. Publishes `create-team-ops`
+
+`create-team-ops` downloads the template from the git tag matching its own
+version (`v<version>`, falling back to `main`), so bump `apps/create/package.json`
+together with the tag.
 
 ```bash
-# Bump versions in apps/mcp/package.json and apps/setup/package.json
+# Bump versions in apps/mcp, apps/setup and apps/create package.json
 git tag v0.1.0
 git push origin v0.1.0
 ```
@@ -33,8 +39,10 @@ git push origin v0.1.0
 npm install
 npm run build -w @team-ops/mcp
 npm run build -w @team-ops/setup
+npm run build -w create-team-ops
 npm publish --access public -w @team-ops/mcp
 npm publish --access public -w @team-ops/setup
+npm publish --access public -w create-team-ops
 ```
 
 ## Verify locally
@@ -51,6 +59,7 @@ API with an agent token, and runs `@team-ops/setup` in a temp directory.
 Users can run:
 
 ```bash
+npm create team-ops@latest my-team   # new instance
 npx @team-ops/setup
 npx @team-ops/mcp   # started by MCP clients automatically
 ```

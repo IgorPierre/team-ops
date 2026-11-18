@@ -6,7 +6,7 @@ Use this before making the GitHub repo public.
 
 - [x] Docker Compose boots API + web + Postgres
 - [x] First-user registration + onboarding flow
-- [x] Agent API keys (`tops_sk_…`) + MCP tools
+- [x] Hosted MCP endpoint (`/mcp`) with OAuth sign-in; API keys for CI
 - [x] `@team-ops/setup` CLI (skill + MCP + `.team-ops.json`)
 - [x] Smoke test script (`make smoke-test`)
 - [x] CI (API tests + web + MCP + setup + website build)
@@ -33,7 +33,7 @@ make smoke-test
 git clone https://github.com/YOUR_ORG/team-ops
 cd team-ops && cp .env.example .env && docker compose up -d
 
-# 2. Open http://localhost:3000 → register → onboarding → Settings → Agents → copy tops_sk_…
+# 2. Open http://localhost:3000 → register → onboarding → Settings → Agents → connect your editor
 
 # 3. In the coding repo
 npx @team-ops/setup

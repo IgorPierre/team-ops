@@ -12,13 +12,14 @@ Team-Ops MCP ──┘
 ## Actor model
 
 Every mutating request carries an `Actor` (`user`, `agent`, or `system`).
-Task activities record who did what. Agents authenticate with hashed API
-keys and scopes. Users authenticate with Argon2id passwords and sessions.
+Task activities record who did what. Coding agents authenticate with OAuth
+tokens (stored hashed) that a developer approves in the browser; scripts can
+use hashed API keys. Both carry scopes. Users authenticate with Argon2id passwords and sessions.
 
 After the first account, registration is invite-only. An org admin creates
 a hashed invite token (`tops_inv_…`); the new user joins that org with a
 role (`admin`, `developer`, `viewer`). Agents never join as users — they
-authenticate with org-bound API keys.
+act for a developer through OAuth, bound to one organization.
 
 ## Concurrency
 
