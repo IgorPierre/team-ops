@@ -6,6 +6,7 @@ COPY apps/web/package.json apps/web/package.json
 COPY apps/website/package.json apps/website/package.json
 COPY apps/mcp/package.json apps/mcp/package.json
 COPY packages/api-client/package.json packages/api-client/package.json
+COPY packages/mcp-server/package.json packages/mcp-server/package.json
 RUN npm install
 
 FROM node:22-alpine AS build

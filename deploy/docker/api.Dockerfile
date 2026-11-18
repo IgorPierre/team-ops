@@ -7,12 +7,14 @@ RUN --mount=type=cache,target=/go/pkg/mod cd apps/api && go mod download
 COPY apps/api ./apps/api
 COPY db ./db
 WORKDIR /src/apps/api
-RUN CGO_ENABLED=0 go build -o /out/server ./cmd/server
+RUN CGO_ENABLED=0 go build -o /out/server ./cmd/server \
+    && CGO_ENABLED=0 go build -o /out/seed ./cmd/seed
 
 FROM alpine:3.21
 RUN apk add --no-cache ca-certificates wget
 WORKDIR /app
 COPY --from=build /out/server /app/server
+COPY --from=build /out/seed /app/seed
 COPY db/migrations /migrations
 ENV MIGRATIONS_DIR=/migrations
 ENV HTTP_ADDR=:8080

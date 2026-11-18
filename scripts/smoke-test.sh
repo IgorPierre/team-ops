@@ -23,12 +23,18 @@ for _ in $(seq 1 30); do
 done
 curl -sf http://localhost:8080/healthz >/dev/null
 
-echo "→ Building npm packages..."
-npm install >/dev/null
-npm run build -w @team-ops/mcp
-npm run build -w @team-ops/setup
-npm run test -w @team-ops/mcp
-npm run test -w @team-ops/setup
+# Instances scaffolded without AI agents (create-team-ops --no-agents) have no apps/mcp or apps/setup.
+HAS_AGENTS=0
+if [ -d apps/mcp ] && [ -d apps/setup ]; then HAS_AGENTS=1; fi
+
+if [ "$HAS_AGENTS" = 1 ]; then
+  echo "→ Building npm packages..."
+  npm install >/dev/null
+  npm run build -w @team-ops/mcp
+  npm run build -w @team-ops/setup
+  npm run test -w @team-ops/mcp-server
+  npm run test -w @team-ops/setup
+fi
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
@@ -83,19 +89,29 @@ curl -sf -X POST "http://localhost:8080/v1/tasks/$TASK_ID/move" \
   -H 'Content-Type: application/json' \
   -d "{\"status\":\"in_progress\",\"expectedVersion\":$VERSION}" >/dev/null
 
+if [ "$HAS_AGENTS" != 1 ]; then
+  echo ""
+  echo "Smoke test passed (API only; no agent packages in this instance)."
+  exit 0
+fi
+
+echo "→ Checking hosted MCP endpoint asks for OAuth..."
+STATUS=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:3000/mcp -H 'Content-Type: application/json' -d '{}')
+test "$STATUS" = "401"
+curl -sf http://localhost:3000/.well-known/oauth-protected-resource/mcp | grep -q '"resource"'
+curl -sf http://localhost:3000/.well-known/oauth-authorization-server | grep -q '"token_endpoint"'
+
 echo "→ Running setup CLI in temp project..."
 WORK="$TMP/work"
 mkdir -p "$WORK/.cursor"
-TEAM_OPS_URL=http://localhost:8080 TEAM_OPS_TOKEN="$TOKEN" node apps/setup/dist/index.js \
-  --yes --cwd "$WORK" --cursor --project
+node apps/setup/dist/index.js --yes --cwd "$WORK" --cursor --project --url http://localhost:3000 --project-key ERP
 
 test -f "$WORK/.cursor/skills/team-ops/SKILL.md"
-test -f "$WORK/.cursor/mcp.json"
-test -f "$WORK/.team-ops.json"
+grep -q '"url": "http://localhost:3000/mcp"' "$WORK/.cursor/mcp.json"
+grep -q '"projectKey": "ERP"' "$WORK/.team-ops.json"
 
 echo "→ Setup check mode..."
-TEAM_OPS_URL=http://localhost:8080 TEAM_OPS_TOKEN="$TOKEN" node apps/setup/dist/index.js \
-  --check --yes --url http://localhost:8080 --token "$TOKEN"
+node apps/setup/dist/index.js --check --url http://localhost:3000
 
 echo ""
 echo "Smoke test passed."

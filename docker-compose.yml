@@ -3,12 +3,12 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: teamops
-      POSTGRES_PASSWORD: teamops
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-teamops}
       POSTGRES_DB: teamops
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    # No published port: only the api container talks to the database.
+    # Use `docker compose exec postgres psql -U teamops` (or make backup) to reach it.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U teamops -d teamops"]
       interval: 5s
@@ -23,7 +23,7 @@ services:
     environment:
       # Always use the compose service hostname. Host `.env` DATABASE_URL
       # (localhost) is for `make api-dev`, not for this container.
-      DATABASE_URL: postgres://teamops:teamops@postgres:5432/teamops?sslmode=disable
+      DATABASE_URL: postgres://teamops:${POSTGRES_PASSWORD:-teamops}@postgres:5432/teamops?sslmode=disable
       HTTP_ADDR: :8080
       APP_URL: ${APP_URL:-http://localhost:3000}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
@@ -34,8 +34,11 @@ services:
       postgres:
         condition: service_healthy
         required: false
+    # Loopback only. Browsers and coding agents go through the web app, which
+    # proxies /v1 and /healthz — point agents at the same URL people open.
+    # Set API_BIND=0.0.0.0 to expose the API port directly.
     ports:
-      - "8080:8080"
+      - "${API_BIND:-127.0.0.1}:8080:8080"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
@@ -53,6 +56,8 @@ services:
     environment:
       API_URL: http://api:8080
       NEXT_PUBLIC_API_BASE: /v1
+      # Public URL; the hosted MCP endpoint (APP_URL/mcp) advertises it for OAuth.
+      APP_URL: ${APP_URL:-http://localhost:3000}
     depends_on:
       api:
         condition: service_healthy

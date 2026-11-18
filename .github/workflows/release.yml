@@ -57,3 +57,8 @@ jobs:
         working-directory: apps/setup
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm run build -w create-team-ops
+      - run: npm publish --access public
+        working-directory: apps/create
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

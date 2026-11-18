@@ -57,6 +57,10 @@ jobs:
           npm run typecheck -w @team-ops/web
           npm run test -w @team-ops/web
           npm run build -w @team-ops/web
+      - name: MCP server (hosted /mcp)
+        run: |
+          npm run typecheck -w @team-ops/mcp-server
+          npm run test -w @team-ops/mcp-server
       - name: MCP
         run: |
           npm run lint -w @team-ops/mcp
@@ -67,5 +71,10 @@ jobs:
           npm run lint -w @team-ops/setup
           npm run test -w @team-ops/setup
           npm run build -w @team-ops/setup
+      - name: Create CLI
+        run: |
+          npm run typecheck -w create-team-ops
+          npm run test -w create-team-ops
+          npm run build -w create-team-ops
       - name: Website
         run: npm run build -w @team-ops/website

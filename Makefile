@@ -6,8 +6,9 @@ SHELL := /bin/bash
 	web-lint web-typecheck web-test web-build \
 	mcp-lint mcp-test mcp-build \
 	setup-lint setup-test setup-build \
+	create-test create-build \
 	smoke-test \
-	docker-build docker-up docker-down
+	docker-build docker-up docker-down docker-seed
 
 COMPOSE := docker compose
 COMPOSE_DEV := docker compose -f docker-compose.dev.yml
@@ -101,6 +102,12 @@ setup-test:
 setup-build:
 	npm run build -w @team-ops/setup
 
+create-test:
+	npm run test -w create-team-ops
+
+create-build:
+	npm run build -w create-team-ops
+
 smoke-test:
 	bash scripts/smoke-test.sh
 
@@ -112,6 +119,9 @@ docker-up:
 
 docker-down:
 	$(COMPOSE) down
+
+docker-seed: ## Load demo data into the running stack (no Go needed)
+	$(COMPOSE) exec -T api /app/seed
 
 backup:
 	@mkdir -p $(BACKUP_DIR)
