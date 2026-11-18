@@ -20,6 +20,7 @@ import (
 	"github.com/team-ops/api/internal/agents"
 	"github.com/team-ops/api/internal/apperr"
 	"github.com/team-ops/api/internal/auth"
+	"github.com/team-ops/api/internal/oauth"
 	"github.com/team-ops/api/internal/organizations"
 	"github.com/team-ops/api/internal/projects"
 	"github.com/team-ops/api/internal/tasks"
@@ -58,6 +59,7 @@ func main() {
 	projectSvc := projects.New(pool, orgSvc)
 	taskSvc := tasks.New(pool, orgSvc)
 	agentSvc := agents.New(pool, orgSvc)
+	oauthSvc := oauth.New(pool, orgSvc, cfg.AppURL)
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -77,6 +79,8 @@ func main() {
 		_, _ = w.Write([]byte("ok"))
 	})
 
+	oauthSvc.PublicRoutes(r)
+
 	r.Route("/v1", func(r chi.Router) {
 		r.Mount("/auth", authSvc.Routes())
 		r.Group(func(r chi.Router) {
@@ -85,6 +89,7 @@ func main() {
 			r.Mount("/projects", projectSvc.Routes())
 			r.Mount("/tasks", taskSvc.Routes())
 			r.Mount("/agents", agentSvc.Routes())
+			r.Mount("/oauth", oauthSvc.SessionRoutes())
 		})
 	})
 

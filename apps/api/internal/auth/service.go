@@ -74,6 +74,7 @@ func (s *Service) Routes() chi.Router {
 	r.Post("/login", s.handleLogin)
 	r.Post("/logout", s.handleLogout)
 	r.Get("/me", s.handleMe)
+	r.Get("/whoami", s.handleWhoAmI)
 	return r
 }
 
@@ -297,6 +298,11 @@ func (s *Service) authenticate(r *http.Request) (actor.Actor, bool) {
 		if strings.HasPrefix(token, "tops_sk_") {
 			return s.authenticateAPIKey(r.Context(), token)
 		}
+		if strings.HasPrefix(token, OAuthAccessPrefix) {
+			return s.authenticateOAuth(r.Context(), token)
+		}
+		// Any other bearer token is invalid; don't fall back to the cookie.
+		return actor.Actor{}, false
 	}
 	c, err := r.Cookie(s.cookieName)
 	if err != nil || c.Value == "" {
@@ -337,6 +343,48 @@ func (s *Service) authenticateAPIKey(ctx context.Context, raw string) (actor.Act
 		Scopes:         key.Scopes,
 		Name:           ag.Name,
 	}, true
+}
+
+// authenticateOAuth resolves an OAuth access token to the agent it was issued
+// for. The person who approved it must still be able to write the board.
+func (s *Service) authenticateOAuth(ctx context.Context, raw string) (actor.Actor, bool) {
+	tok, err := s.q.GetActiveOAuthToken(ctx, db.GetActiveOAuthTokenParams{TokenHash: HashToken(raw), Kind: "access"})
+	if err != nil {
+		return actor.Actor{}, false
+	}
+	ag, err := s.q.GetAgent(ctx, tok.AgentID)
+	if err != nil || !ag.Active || ag.DeveloperID == nil || ag.OrganizationID == nil {
+		return actor.Actor{}, false
+	}
+	m, err := s.q.GetOrganizationMember(ctx, db.GetOrganizationMemberParams{OrganizationID: *ag.OrganizationID, UserID: *ag.DeveloperID})
+	if err != nil || m.Role == string(actor.RoleViewer) {
+		return actor.Actor{}, false
+	}
+	_ = s.q.TouchAgentLastSeen(ctx, ag.ID)
+	return actor.Actor{
+		Type:           actor.TypeAgent,
+		ID:             ag.ID,
+		OrganizationID: ag.OrganizationID,
+		DeveloperID:    ag.DeveloperID,
+		Scopes:         DefaultAgentScopes,
+		Name:           ag.Name,
+	}, true
+}
+
+// handleWhoAmI tells any caller (session, API key or OAuth token) who it is.
+// The MCP endpoint uses it to validate tokens and default the organization.
+func (s *Service) handleWhoAmI(w http.ResponseWriter, r *http.Request) {
+	a, ok := RequireActor(w, r)
+	if !ok {
+		return
+	}
+	httpx.JSON(w, http.StatusOK, map[string]any{
+		"actorType":      a.Type,
+		"id":             a.ID,
+		"name":           a.Name,
+		"organizationId": a.OrganizationID,
+		"developerId":    a.DeveloperID,
+	}, nil)
 }
 
 func userDTOFrom(u db.User) userDTO {

@@ -17,6 +17,7 @@ SET
     name = COALESCE(sqlc.narg('name'), name),
     description = COALESCE(sqlc.narg('description'), description),
     active = COALESCE(sqlc.narg('active'), active),
+    developer_id = COALESCE(sqlc.narg('developer_id'), developer_id),
     updated_at = now()
 WHERE id = $1
 RETURNING *;
@@ -43,7 +44,7 @@ ORDER BY created_at DESC;
 -- name: RevokeAPIKey :one
 UPDATE api_keys
 SET revoked_at = now()
-WHERE id = $1 AND revoked_at IS NULL
+WHERE id = $1 AND agent_id = $2 AND revoked_at IS NULL
 RETURNING *;
 
 -- name: TouchAPIKeyLastUsed :exec
