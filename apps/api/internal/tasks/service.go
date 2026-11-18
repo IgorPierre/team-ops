@@ -36,6 +36,8 @@ func (s *Service) Routes() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/", s.list)
 	r.Post("/", s.create)
+	r.Get("/activity", s.listOrgActivity)
+	r.Get("/report", s.report)
 	r.Get("/{taskID}", s.get)
 	r.Patch("/{taskID}", s.update)
 	r.Post("/{taskID}/move", s.move)
@@ -155,6 +157,7 @@ type createTaskRequest struct {
 	ExternalRef        *string         `json:"externalRef"`
 	Source             string          `json:"source"`
 	SourceMetadata     json.RawMessage `json:"sourceMetadata"`
+	Proof              *proofInput     `json:"proof"`
 }
 
 func (s *Service) create(w http.ResponseWriter, r *http.Request) {
@@ -196,6 +199,13 @@ func (s *Service) Create(ctx context.Context, a actor.Actor, req createTaskReque
 	if !validStatus(req.Status) || !validPriority(req.Priority) {
 		return TaskDTO{}, apperr.New("VALIDATION", "Invalid status or priority.", http.StatusBadRequest)
 	}
+	proofKind, proofURL, err := checkProof(req.Proof)
+	if err != nil {
+		return TaskDTO{}, err
+	}
+	if err := requireProof("", nil, req.Status, proofKind); err != nil {
+		return TaskDTO{}, err
+	}
 	project, err := s.q.GetProject(ctx, req.ProjectID)
 	if err != nil || project.OrganizationID != req.OrganizationID {
 		return TaskDTO{}, apperr.New("NOT_FOUND", "Project not found.", http.StatusNotFound)
@@ -228,11 +238,17 @@ func (s *Service) Create(ctx context.Context, a actor.Actor, req createTaskReque
 	if len(meta) == 0 {
 		meta = json.RawMessage(`{}`)
 	}
+	// Work a coding agent picks up belongs to the developer who owns the agent,
+	// so the board, timeline and reports credit that person.
 	var reporter *uuid.UUID
+	assignee := req.AssigneeID
 	if a.IsUser() {
 		reporter = &a.ID
 	} else if a.DeveloperID != nil {
 		reporter = a.DeveloperID
+		if assignee == nil {
+			assignee = a.DeveloperID
+		}
 	}
 	task, err := s.q.CreateTask(ctx, db.CreateTaskParams{
 		Number:             number,
@@ -243,7 +259,7 @@ func (s *Service) Create(ctx context.Context, a actor.Actor, req createTaskReque
 		AcceptanceCriteria: req.AcceptanceCriteria,
 		Status:             req.Status,
 		Priority:           req.Priority,
-		AssigneeID:         req.AssigneeID,
+		AssigneeID:         assignee,
 		ReporterID:         reporter,
 		DueDate:            textDate(req.DueDate),
 		Position:           pos,
@@ -252,6 +268,8 @@ func (s *Service) Create(ctx context.Context, a actor.Actor, req createTaskReque
 		Source:             source,
 		ExternalRef:        emptyToNil(req.ExternalRef),
 		SourceMetadata:     meta,
+		ProofKind:          proofKind,
+		ProofUrl:           proofURL,
 	})
 	if err != nil {
 		if database.IsUniqueViolation(err) {
@@ -277,15 +295,16 @@ func (s *Service) get(w http.ResponseWriter, r *http.Request) {
 }
 
 type patchTaskRequest struct {
-	Title              *string    `json:"title"`
-	Description        *string    `json:"description"`
-	AcceptanceCriteria *string    `json:"acceptanceCriteria"`
-	Status             *string    `json:"status"`
-	Priority           *string    `json:"priority"`
-	AssigneeID         *uuid.UUID `json:"assigneeId"`
-	ClearAssignee      bool       `json:"clearAssignee"`
-	DueDate            *string    `json:"dueDate"`
-	ExpectedVersion    int32      `json:"expectedVersion"`
+	Title              *string     `json:"title"`
+	Description        *string     `json:"description"`
+	AcceptanceCriteria *string     `json:"acceptanceCriteria"`
+	Status             *string     `json:"status"`
+	Priority           *string     `json:"priority"`
+	AssigneeID         *uuid.UUID  `json:"assigneeId"`
+	ClearAssignee      bool        `json:"clearAssignee"`
+	DueDate            *string     `json:"dueDate"`
+	Proof              *proofInput `json:"proof"`
+	ExpectedVersion    int32       `json:"expectedVersion"`
 }
 
 func (s *Service) update(w http.ResponseWriter, r *http.Request) {
@@ -310,8 +329,21 @@ func (s *Service) update(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, apperr.New("VALIDATION", "Invalid priority.", http.StatusBadRequest))
 		return
 	}
+	proofKind, proofURL, err := checkProof(req.Proof)
+	if err != nil {
+		httpx.Error(w, err)
+		return
+	}
+	if req.Status != nil {
+		if err := requireProof(task.Status, task.ProofKind, *req.Status, proofKind); err != nil {
+			httpx.Error(w, err)
+			return
+		}
+	}
 	params := db.UpdateTaskParams{
 		ID:                 task.ID,
+		ProofKind:          proofKind,
+		ProofUrl:           proofURL,
 		ExpectedVersion:    req.ExpectedVersion,
 		Title:              req.Title,
 		Description:        req.Description,
@@ -361,9 +393,10 @@ func (s *Service) update(w http.ResponseWriter, r *http.Request) {
 }
 
 type moveRequest struct {
-	Status          string `json:"status"`
-	Position        string `json:"position"`
-	ExpectedVersion int32  `json:"expectedVersion"`
+	Status          string      `json:"status"`
+	Position        string      `json:"position"`
+	Proof           *proofInput `json:"proof"`
+	ExpectedVersion int32       `json:"expectedVersion"`
 }
 
 func (s *Service) move(w http.ResponseWriter, r *http.Request) {
@@ -392,8 +425,14 @@ func (s *Service) Move(ctx context.Context, a actor.Actor, task db.Task, req mov
 	if !validStatus(req.Status) {
 		return TaskDTO{}, apperr.New("VALIDATION", "Invalid status.", http.StatusBadRequest)
 	}
+	proofKind, proofURL, err := checkProof(req.Proof)
+	if err != nil {
+		return TaskDTO{}, err
+	}
+	if err := requireProof(task.Status, task.ProofKind, req.Status, proofKind); err != nil {
+		return TaskDTO{}, err
+	}
 	var pos decimal.Decimal
-	var err error
 	if req.Position != "" {
 		pos, err = parsePosition(req.Position)
 		if err != nil {
@@ -406,10 +445,12 @@ func (s *Service) Move(ctx context.Context, a actor.Actor, task db.Task, req mov
 		}
 	}
 	updated, err := s.q.MoveTask(ctx, db.MoveTaskParams{
-		Status:   req.Status,
-		Position: pos,
-		ID:       task.ID,
-		Version:  req.ExpectedVersion,
+		Status:    req.Status,
+		Position:  pos,
+		ProofKind: proofKind,
+		ProofUrl:  proofURL,
+		ID:        task.ID,
+		Version:   req.ExpectedVersion,
 	})
 	if err != nil {
 		if database.IsNoRows(err) {
@@ -711,9 +752,10 @@ func (s *Service) review(w http.ResponseWriter, r *http.Request) {
 }
 
 type completeRequest struct {
-	CompletionSummary     string `json:"completionSummary"`
-	AcceptanceCriteriaMet bool   `json:"acceptanceCriteriaMet"`
-	ExpectedVersion       int32  `json:"expectedVersion"`
+	CompletionSummary     string      `json:"completionSummary"`
+	AcceptanceCriteriaMet bool        `json:"acceptanceCriteriaMet"`
+	Proof                 *proofInput `json:"proof"`
+	ExpectedVersion       int32       `json:"expectedVersion"`
 }
 
 func (s *Service) complete(w http.ResponseWriter, r *http.Request) {
@@ -738,6 +780,15 @@ func (s *Service) complete(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, apperr.New("VALIDATION", "acceptance_criteria_met must be true to complete a task.", http.StatusBadRequest))
 		return
 	}
+	proofKind, proofURL, err := checkProof(req.Proof)
+	if err != nil {
+		httpx.Error(w, err)
+		return
+	}
+	if err := requireProof(task.Status, task.ProofKind, StatusDone, proofKind); err != nil {
+		httpx.Error(w, err)
+		return
+	}
 	pos, err := nextPosition(r.Context(), s.q, task.OrganizationID, &task.ProjectID, StatusDone)
 	if err != nil {
 		httpx.Error(w, err)
@@ -750,6 +801,8 @@ func (s *Service) complete(w http.ResponseWriter, r *http.Request) {
 		Status:            strPtr(StatusDone),
 		Position:          &pos,
 		CompletionSummary: &summary,
+		ProofKind:         proofKind,
+		ProofUrl:          proofURL,
 	})
 	if err != nil {
 		if database.IsNoRows(err) {
@@ -759,7 +812,7 @@ func (s *Service) complete(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, err)
 		return
 	}
-	_ = s.record(r.Context(), a, updated.ID, ActionCompleted, map[string]any{"status": task.Status}, map[string]any{"status": StatusDone, "completionSummary": summary}, nil)
+	_ = s.record(r.Context(), a, updated.ID, ActionCompleted, map[string]any{"status": task.Status}, map[string]any{"status": StatusDone, "completionSummary": summary, "proof": proofDTO(proofKind, proofURL)}, nil)
 	dto, err := s.enrich(r.Context(), updated)
 	if err != nil {
 		httpx.Error(w, err)

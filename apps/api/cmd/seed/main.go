@@ -219,6 +219,12 @@ func seed(ctx context.Context, q *db.Queries) error {
 		if ac == "" {
 			ac = "Covered by the description. Ship with tests."
 		}
+		// Finished demo work points at where it can be checked.
+		var proofKind, proofURL *string
+		if t.status == "done" {
+			proofKind = strPtr("github")
+			proofURL = strPtr(fmt.Sprintf("https://github.com/acme/platform/pull/%d", 100+n))
+		}
 		task, err := q.CreateTask(ctx, db.CreateTaskParams{
 			Number:             n,
 			OrganizationID:     t.org,
@@ -237,6 +243,8 @@ func seed(ctx context.Context, q *db.Queries) error {
 			Source:             t.source,
 			ExternalRef:        t.ext,
 			SourceMetadata:     json.RawMessage(`{}`),
+			ProofKind:          proofKind,
+			ProofUrl:           proofURL,
 		})
 		if err != nil {
 			if database.IsUniqueViolation(err) {

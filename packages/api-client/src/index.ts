@@ -45,6 +45,14 @@ export interface Project {
   createdAt: string;
 }
 
+/** Where finished work can be checked; "none" = nothing to link (planning, research). */
+export type ProofKind = "github" | "vercel" | "supabase" | "other" | "none";
+
+export interface TaskProof {
+  kind: ProofKind;
+  url?: string | null;
+}
+
 export interface Task {
   id: string;
   number: number;
@@ -68,6 +76,8 @@ export interface Task {
   externalRef?: string | null;
   sourceMetadata: Record<string, unknown>;
   completionSummary?: string | null;
+  /** Evidence recorded when the task moved to done. */
+  proof?: TaskProof | null;
   version: number;
   commentCount: number;
   createdAt: string;
@@ -96,6 +106,81 @@ export interface Activity {
   createdAt: string;
 }
 
+export interface OrgActivity {
+  id: string;
+  taskId: string;
+  taskKey: string;
+  taskTitle: string;
+  projectId: string;
+  actorType: "user" | "agent" | "system";
+  actorId?: string | null;
+  action: string;
+  createdAt: string;
+}
+
+export interface OrgActivityQuery {
+  organizationId: string;
+  projectId?: string;
+  actorId?: string;
+  /** With actorId: also include what that person's coding agents did. */
+  includeAgents?: boolean;
+  /** Look-back window in days (server default 371, max 731). */
+  days?: number;
+  limit?: number;
+}
+
+export interface ReportCounts {
+  created: number;
+  completed: number;
+  completedByAi: number;
+  open: number;
+  inProgress: number;
+  review: number;
+  blocked: number;
+  overdue: number;
+  avgCycleHours: number | null;
+  medianCycleHours: number | null;
+}
+
+export interface ReportTask {
+  id: string;
+  key: string;
+  title: string;
+  projectId: string;
+  status: TaskStatus;
+  priority: string;
+  source: string;
+  blocked: boolean;
+  assigneeId: string | null;
+  createdAt: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  dueDate: string | null;
+  cycleHours: number | null;
+  completionSummary: string | null;
+}
+
+export interface Report {
+  from: string;
+  to: string;
+  totals: ReportCounts;
+  /** One row per assignee; `id: null` is unassigned work. */
+  byPerson: (ReportCounts & { id: string | null })[];
+  byProject: (ReportCounts & { id: string; key: string })[];
+  weekly: { weekStart: string; created: number; completed: number }[];
+  completed: ReportTask[];
+  open: ReportTask[];
+}
+
+export interface ReportQuery {
+  organizationId: string;
+  /** YYYY-MM-DD, inclusive. Defaults to the last 30 days. */
+  from?: string;
+  to?: string;
+  projectId?: string;
+  assigneeId?: string;
+}
+
 export interface Agent {
   id: string;
   name: string;
@@ -105,6 +190,25 @@ export interface Agent {
   active: boolean;
   lastSeenAt?: string | null;
   createdAt: string;
+  /** Editor signed in through OAuth (e.g. "Claude Code"), when connected. */
+  connectedApp?: string | null;
+  connectedSince?: string | null;
+}
+
+export interface OAuthClientInfo {
+  clientId: string;
+  clientName: string;
+  redirectUris: string[];
+}
+
+export interface OAuthApproval {
+  clientId: string;
+  redirectUri: string;
+  codeChallenge: string;
+  codeChallengeMethod: string;
+  state?: string;
+  resource?: string;
+  organizationId: string;
 }
 
 export interface APIKey {
@@ -308,7 +412,7 @@ export class TeamOpsClient {
   }
   moveTask(
     id: string,
-    body: { status: TaskStatus; position?: string; expectedVersion: number },
+    body: { status: TaskStatus; position?: string; proof?: TaskProof; expectedVersion: number },
   ) {
     return this.request<Task>("POST", `/tasks/${id}/move`, body);
   }
@@ -335,6 +439,7 @@ export class TeamOpsClient {
     body: {
       completionSummary: string;
       acceptanceCriteriaMet: boolean;
+      proof?: TaskProof;
       expectedVersion: number;
     },
   ) {
@@ -347,11 +452,44 @@ export class TeamOpsClient {
     return this.request<Activity[]>("GET", `/tasks/${id}/activities`);
   }
 
+  listOrganizationActivity(query: OrgActivityQuery) {
+    return this.request<OrgActivity[]>("GET", "/tasks/activity", undefined, {
+      organizationId: query.organizationId,
+      projectId: query.projectId,
+      actorId: query.actorId,
+      includeAgents: query.includeAgents ? "true" : undefined,
+      days: query.days === undefined ? undefined : String(query.days),
+      limit: query.limit === undefined ? undefined : String(query.limit),
+    });
+  }
+
+  getOAuthClient(clientId: string) {
+    return this.request<OAuthClientInfo>("GET", `/oauth/clients/${encodeURIComponent(clientId)}`);
+  }
+  /** Approve an editor's sign-in; returns where to send the browser back to. */
+  approveOAuth(body: OAuthApproval) {
+    return this.request<{ redirectTo: string; agentId: string }>("POST", "/oauth/authorize", body);
+  }
+
+  getReport(query: ReportQuery) {
+    return this.request<Report>("GET", "/tasks/report", undefined, {
+      organizationId: query.organizationId,
+      from: query.from,
+      to: query.to,
+      projectId: query.projectId,
+      assigneeId: query.assigneeId,
+    });
+  }
+
   listAgents(organizationId: string) {
     return this.request<Agent[]>("GET", "/agents", undefined, { organizationId });
   }
-  createAgent(body: { organizationId: string; name: string; description?: string }) {
+  /** Developers create agents for themselves; admins may pass developerId to create one for a member. */
+  createAgent(body: { organizationId: string; name: string; description?: string; developerId?: string }) {
     return this.request<Agent>("POST", "/agents", body);
+  }
+  updateAgent(id: string, body: { name?: string; description?: string; active?: boolean; developerId?: string }) {
+    return this.request<Agent>("PATCH", `/agents/${id}`, body);
   }
   listAPIKeys(agentId: string) {
     return this.request<APIKey[]>("GET", `/agents/${agentId}/api-keys`);

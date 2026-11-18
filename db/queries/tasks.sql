@@ -16,9 +16,11 @@ INSERT INTO tasks (
     blocked_reason,
     source,
     external_ref,
-    source_metadata
+    source_metadata,
+    proof_kind,
+    proof_url
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
 )
 RETURNING *;
 
@@ -53,6 +55,12 @@ WHERE t.organization_id = sqlc.arg('organization_id')
       OR t.title ILIKE '%' || sqlc.narg('search') || '%'
       OR t.description ILIKE '%' || sqlc.narg('search') || '%'
       OR t.external_ref ILIKE '%' || sqlc.narg('search') || '%'
+      -- Task keys like ERP-142 are project key + number, not stored on the row.
+      OR EXISTS (
+          SELECT 1 FROM projects kp
+          WHERE kp.id = t.project_id
+            AND upper(kp.key || '-' || t.number::text) = upper(trim(sqlc.narg('search')))
+      )
   )
 ORDER BY t.status, t.position ASC, t.created_at ASC;
 
@@ -79,6 +87,8 @@ SET
     external_ref = COALESCE(sqlc.narg('external_ref'), external_ref),
     source_metadata = COALESCE(sqlc.narg('source_metadata'), source_metadata),
     completion_summary = COALESCE(sqlc.narg('completion_summary'), completion_summary),
+    proof_kind = COALESCE(sqlc.narg('proof_kind'), proof_kind),
+    proof_url = CASE WHEN sqlc.narg('proof_kind')::text IS NULL THEN proof_url ELSE sqlc.narg('proof_url') END,
     version = version + 1,
     updated_at = now()
 WHERE id = sqlc.arg('id')
@@ -100,12 +110,14 @@ RETURNING *;
 -- name: MoveTask :one
 UPDATE tasks
 SET
-    status = $1,
-    position = $2,
+    status = sqlc.arg('status'),
+    position = sqlc.arg('position'),
+    proof_kind = COALESCE(sqlc.narg('proof_kind'), proof_kind),
+    proof_url = CASE WHEN sqlc.narg('proof_kind')::text IS NULL THEN proof_url ELSE sqlc.narg('proof_url') END,
     version = version + 1,
     updated_at = now()
-WHERE id = $3
-  AND version = $4
+WHERE id = sqlc.arg('id')
+  AND version = sqlc.arg('version')
   AND archived_at IS NULL
 RETURNING *;
 
@@ -148,3 +160,47 @@ WHERE organization_id = sqlc.arg('organization_id')
   AND (sqlc.narg('filter_project_id')::uuid IS NULL OR project_id = sqlc.narg('filter_project_id'))
   AND status = sqlc.arg('column_status')
   AND archived_at IS NULL;
+
+-- name: ListReportTasks :many
+-- Tasks relevant to a report window: created or completed in it, or still open.
+-- started_at / completed_at come from the activity log (tasks have no such columns).
+SELECT
+    t.id,
+    t.number,
+    t.title,
+    t.status,
+    t.priority,
+    t.source,
+    t.blocked,
+    t.due_date,
+    t.assignee_id,
+    t.project_id,
+    t.completion_summary,
+    t.created_at,
+    p.key AS project_key,
+    (
+        SELECT min(a.created_at) FROM task_activities a
+        WHERE a.task_id = t.id
+          AND (a.action = 'task.started' OR (a.action IN ('task.moved', 'task.created') AND a.new_value->>'status' = 'in_progress'))
+    )::timestamptz AS started_at,
+    -- Done via the complete endpoint or a drag to the Done column;
+    -- tasks with no such history (imports, seeds) fall back to their last update.
+    CASE WHEN t.status = 'done' THEN COALESCE(
+        (
+            SELECT max(a.created_at) FROM task_activities a
+            WHERE a.task_id = t.id
+              AND (a.action = 'task.completed' OR (a.action = 'task.moved' AND a.new_value->>'status' = 'done'))
+        ),
+        t.updated_at
+    ) END::timestamptz AS completed_at
+FROM tasks t
+JOIN projects p ON p.id = t.project_id
+WHERE t.organization_id = sqlc.arg('organization_id')
+  AND t.archived_at IS NULL
+  AND (sqlc.narg('project_id')::uuid IS NULL OR t.project_id = sqlc.narg('project_id'))
+  AND (
+      t.status <> 'done'
+      OR t.created_at >= sqlc.arg('since')
+      OR t.updated_at >= sqlc.arg('since')
+  )
+ORDER BY t.created_at;

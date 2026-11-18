@@ -382,6 +382,105 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/Task"
+  /tasks/activity:
+    get:
+      tags: [Tasks]
+      operationId: listOrganizationActivity
+      summary: Organization-wide activity feed (powers contribution charts)
+      parameters:
+        - { in: query, name: organizationId, required: true, schema: { type: string, format: uuid } }
+        - { in: query, name: projectId, schema: { type: string, format: uuid } }
+        - { in: query, name: actorId, schema: { type: string, format: uuid } }
+        - in: query
+          name: includeAgents
+          description: With actorId, also include activity by coding agents that person owns.
+          schema: { type: boolean, default: false }
+        - { in: query, name: days, schema: { type: integer, minimum: 1, maximum: 731, default: 371 } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 20000, default: 5000 } }
+      responses:
+        "200":
+          $ref: "#/components/responses/ActivityList"
+  /auth/whoami:
+    get:
+      tags: [Auth]
+      operationId: whoAmI
+      summary: Who is calling (session, API key or OAuth token)
+      responses:
+        "200":
+          description: Caller
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      actorType: { type: string, enum: [user, agent] }
+                      id: { type: string, format: uuid }
+                      name: { type: string }
+                      organizationId: { type: string, format: uuid, nullable: true }
+                      developerId: { type: string, format: uuid, nullable: true }
+  /oauth/clients/{clientId}:
+    get:
+      tags: [OAuth]
+      operationId: getOAuthClient
+      summary: Registered MCP client, for the consent screen (session)
+      parameters:
+        - { in: path, name: clientId, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Client name and redirect URIs }
+  /oauth/authorize:
+    post:
+      tags: [OAuth]
+      operationId: approveOAuth
+      summary: Approve an editor's sign-in (session; admin or developer)
+      description: >-
+        Creates or reuses an agent owned by the caller in the chosen organization
+        and returns the redirect URL carrying a one-time code. The public OAuth
+        endpoints (/.well-known/*, /oauth/register, /oauth/token, /oauth/revoke)
+        live outside /v1 — see docs/mcp.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [clientId, redirectUri, codeChallenge, codeChallengeMethod, organizationId]
+              properties:
+                clientId: { type: string }
+                redirectUri: { type: string }
+                codeChallenge: { type: string }
+                codeChallengeMethod: { type: string, enum: [S256] }
+                state: { type: string }
+                resource: { type: string }
+                organizationId: { type: string, format: uuid }
+      responses:
+        "200": { description: "{ redirectTo, agentId }" }
+  /tasks/report:
+    get:
+      tags: [Tasks]
+      operationId: getReport
+      summary: Delivery report for a period (by person, by project, weekly, task list)
+      description: >-
+        Work is credited to the assignee. Tasks created by a coding agent are
+        assigned to the developer who owns the agent. Cycle time runs from the
+        first move to in_progress until completion. Range is at most one year.
+      parameters:
+        - { in: query, name: organizationId, required: true, schema: { type: string, format: uuid } }
+        - { in: query, name: from, description: "YYYY-MM-DD, inclusive (default: 29 days before `to`)", schema: { type: string, format: date } }
+        - { in: query, name: to, description: "YYYY-MM-DD, inclusive (default: today, UTC)", schema: { type: string, format: date } }
+        - { in: query, name: projectId, schema: { type: string, format: uuid } }
+        - { in: query, name: assigneeId, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Report
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: "#/components/schemas/Report" }
   /tasks/{taskId}/activities:
     get:
       tags: [Tasks]
@@ -414,8 +513,32 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/CreateAgentRequest"
+      description: >-
+        Admins and developers can create agents. The caller owns the agent;
+        admins may pass developerId to create one for another non-viewer member.
       responses:
         "201":
+          $ref: "#/components/responses/Agent"
+  /agents/{agentId}:
+    patch:
+      tags: [Agents]
+      operationId: updateAgent
+      description: Owner or admin. Only admins can change developerId.
+      parameters:
+        - $ref: "#/components/parameters/AgentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+                active: { type: boolean }
+                developerId: { type: string, format: uuid }
+      responses:
+        "200":
           $ref: "#/components/responses/Agent"
   /agents/{agentId}/api-keys:
     get:
@@ -737,6 +860,71 @@ components:
         organizationId: { type: string, format: uuid }
         name: { type: string }
         description: { type: string }
+        developerId: { type: string, format: uuid, description: "Admins only: owner of the agent (defaults to the caller)" }
+    ReportCounts:
+      type: object
+      properties:
+        created: { type: integer }
+        completed: { type: integer }
+        completedByAi: { type: integer }
+        open: { type: integer }
+        inProgress: { type: integer }
+        review: { type: integer }
+        blocked: { type: integer }
+        overdue: { type: integer }
+        avgCycleHours: { type: number, nullable: true }
+        medianCycleHours: { type: number, nullable: true }
+    ReportTask:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        key: { type: string }
+        title: { type: string }
+        projectId: { type: string, format: uuid }
+        status: { type: string }
+        priority: { type: string }
+        source: { type: string }
+        blocked: { type: boolean }
+        assigneeId: { type: string, format: uuid, nullable: true }
+        createdAt: { type: string, format: date-time }
+        startedAt: { type: string, format: date-time, nullable: true }
+        completedAt: { type: string, format: date-time, nullable: true }
+        dueDate: { type: string, format: date, nullable: true }
+        cycleHours: { type: number, nullable: true }
+        completionSummary: { type: string, nullable: true }
+    Report:
+      type: object
+      properties:
+        from: { type: string, format: date }
+        to: { type: string, format: date }
+        totals: { $ref: "#/components/schemas/ReportCounts" }
+        byPerson:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/ReportCounts"
+              - type: object
+                properties:
+                  id: { type: string, format: uuid, nullable: true, description: "null = unassigned" }
+        byProject:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/ReportCounts"
+              - type: object
+                properties:
+                  id: { type: string, format: uuid }
+                  key: { type: string }
+        weekly:
+          type: array
+          items:
+            type: object
+            properties:
+              weekStart: { type: string, format: date }
+              created: { type: integer }
+              completed: { type: integer }
+        completed: { type: array, items: { $ref: "#/components/schemas/ReportTask" } }
+        open: { type: array, items: { $ref: "#/components/schemas/ReportTask" } }
     CreateAPIKeyRequest:
       type: object
       properties:

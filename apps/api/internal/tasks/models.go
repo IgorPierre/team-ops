@@ -22,20 +22,20 @@ const (
 	StatusReview     = "review"
 	StatusDone       = "done"
 
-	ActionCreated           = "task.created"
-	ActionUpdated           = "task.updated"
-	ActionAssigned          = "task.assigned"
-	ActionUnassigned        = "task.unassigned"
-	ActionMoved             = "task.moved"
-	ActionStarted           = "task.started"
-	ActionBlocked           = "task.blocked"
-	ActionUnblocked         = "task.unblocked"
-	ActionProgressReported  = "task.progress_reported"
-	ActionReviewRequested   = "task.review_requested"
-	ActionCompleted         = "task.completed"
-	ActionReopened          = "task.reopened"
-	ActionArchived          = "task.archived"
-	ActionCommentCreated    = "comment.created"
+	ActionCreated          = "task.created"
+	ActionUpdated          = "task.updated"
+	ActionAssigned         = "task.assigned"
+	ActionUnassigned       = "task.unassigned"
+	ActionMoved            = "task.moved"
+	ActionStarted          = "task.started"
+	ActionBlocked          = "task.blocked"
+	ActionUnblocked        = "task.unblocked"
+	ActionProgressReported = "task.progress_reported"
+	ActionReviewRequested  = "task.review_requested"
+	ActionCompleted        = "task.completed"
+	ActionReopened         = "task.reopened"
+	ActionArchived         = "task.archived"
+	ActionCommentCreated   = "comment.created"
 )
 
 var columnOrder = []string{StatusBacklog, StatusInProgress, StatusReview, StatusDone}
@@ -63,6 +63,7 @@ type TaskDTO struct {
 	ExternalRef        *string         `json:"externalRef"`
 	SourceMetadata     json.RawMessage `json:"sourceMetadata"`
 	CompletionSummary  *string         `json:"completionSummary"`
+	Proof              *ProofDTO       `json:"proof"`
 	Version            int32           `json:"version"`
 	CommentCount       int32           `json:"commentCount"`
 	CreatedAt          time.Time       `json:"createdAt"`
@@ -124,6 +125,7 @@ func dtoFrom(t db.Task, projectKey, projectName string, commentCount int32) Task
 		ExternalRef:        t.ExternalRef,
 		SourceMetadata:     meta,
 		CompletionSummary:  t.CompletionSummary,
+		Proof:              proofDTO(t.ProofKind, t.ProofUrl),
 		Version:            t.Version,
 		CommentCount:       commentCount,
 		CreatedAt:          t.CreatedAt.Time,

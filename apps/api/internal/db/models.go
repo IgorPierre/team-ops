@@ -138,6 +138,8 @@ type Task struct {
 	ArchivedAt         pgtype.Timestamptz `json:"archived_at"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	ProofKind          *string            `json:"proof_kind"`
+	ProofUrl           *string            `json:"proof_url"`
 }
 
 type TaskActivity struct {

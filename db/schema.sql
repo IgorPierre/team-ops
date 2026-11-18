@@ -72,7 +72,9 @@ CREATE TABLE tasks (
     version INTEGER NOT NULL DEFAULT 1,
     archived_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    proof_kind TEXT CHECK (proof_kind IS NULL OR proof_kind IN ('github', 'vercel', 'supabase', 'other', 'none')),
+    proof_url TEXT
 );
 
 CREATE TABLE task_comments (
