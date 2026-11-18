@@ -56,8 +56,7 @@ team; developers update work; viewers follow along.
 
 ### Optional interactive installer
 
-The npm packages are being prepared for their first public release. Until they
-are published, use the repository instructions above. After publication:
+Create an instance with the public npm installer:
 
 ```bash
 npm create team-ops@latest my-team
@@ -94,8 +93,8 @@ claude mcp add --transport http team-ops https://YOUR-TEAM-OPS/mcp
 # In Claude Code: /mcp → team-ops → Authenticate → Allow
 ```
 
-For the skill and project configuration, after the setup package is published,
-run this inside the repository where you do your coding:
+For the skill and project configuration, run this inside the repository where
+you do your coding:
 
 ```bash
 npx @team-ops/setup@latest --url https://YOUR-TEAM-OPS
