@@ -16,6 +16,7 @@ import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHea
 import { Textarea } from "@/components/ui/textarea";
 import { useMemberDirectory } from "@/hooks/use-member-directory";
 import { api } from "@/lib/api";
+import { useWorkspace } from "@/providers/workspace-provider";
 import { errorMessage } from "@/lib/errors";
 import { checklistProgress } from "@/lib/checklist";
 import { useT } from "@/lib/i18n";
@@ -45,13 +46,18 @@ const draftOf = (task: Task | null): Draft => ({
 
 export function TaskDrawer({ task, members, open, onOpenChange, onUpdated }: TaskDrawerProps) {
   const t = useT();
+  const { canWrite } = useWorkspace();
+  const [reason, setReason] = useState("");
   const queryClient = useQueryClient();
   const directory = useMemberDirectory(members);
   const [draft, setDraft] = useState<Draft>(() => draftOf(task));
   const [tab, setTab] = useState<"comments" | "activity">("comments");
 
   // Reset the form whenever another task (or a newer version of it) is shown.
-  useEffect(() => setDraft(draftOf(task)), [task]);
+  useEffect(() => {
+    setDraft(draftOf(task));
+    setReason(task?.blockedReason ?? "");
+  }, [task]);
 
   const comments = useQuery({
     queryKey: ["comments", task?.id],
@@ -82,6 +88,21 @@ export function TaskDrawer({ task, members, open, onOpenChange, onUpdated }: Tas
       onOpenChange(false);
     },
     onError: (error) => toast.error(errorMessage(error, t("Could not archive task"))),
+  });
+
+  const blocker = useMutation({
+    mutationFn: ({ current, resolve }: { current: Task; resolve: boolean }) =>
+      resolve
+        ? api.unblockTask(current.id, { expectedVersion: current.version })
+        : api.blockTask(current.id, { reason: reason.trim(), expectedVersion: current.version }),
+    onSuccess: (updated) => {
+      onUpdated(updated);
+      void queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      void queryClient.invalidateQueries({ queryKey: ["timeline-tasks"] });
+      void queryClient.invalidateQueries({ queryKey: ["activities", updated.id] });
+      toast.success(t(updated.blocked ? "Blocker reported" : "Blocker resolved"));
+    },
+    onError: (error) => toast.error(errorMessage(error, t("Could not update blocker"))),
   });
 
   if (!task) return null;
@@ -124,6 +145,24 @@ export function TaskDrawer({ task, members, open, onOpenChange, onUpdated }: Tas
                 <span className="font-semibold">{t("Blocked.")}</span> {task.blockedReason}
               </p>
             </div>
+          ) : null}
+
+          {canWrite ? (
+            <section className="flex flex-col gap-3">
+              <Field label={t("What is blocking this task?")} htmlFor="task-blocker">
+                <Textarea id="task-blocker" value={reason} onChange={(e) => setReason(e.target.value)}
+                  placeholder={t("Describe what you need to continue…")} />
+              </Field>
+              <p className="text-muted-foreground text-xs">{t("Administrators can see this blocker in Pending items.")}</p>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="secondary" disabled={!reason.trim() || blocker.isPending}
+                  onClick={() => blocker.mutate({ current: task, resolve: false })}>
+                  <OctagonAlertIcon />{t(task.blocked ? "Update blocker" : "Report blocker")}
+                </Button>
+                {task.blocked ? <Button variant="secondary" disabled={blocker.isPending}
+                  onClick={() => blocker.mutate({ current: task, resolve: true })}>{t("Resolve blocker")}</Button> : null}
+              </div>
+            </section>
           ) : null}
 
           <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">

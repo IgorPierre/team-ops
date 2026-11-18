@@ -15,6 +15,7 @@ import { AppSidebar, MobileNavigation } from "./app-sidebar";
 import { activeNavItem } from "./nav-config";
 import { OrganizationSwitcher } from "./organization-switcher";
 import { PageActionsProvider } from "./page-actions";
+import { BlockerAlert } from "./blocker-alert";
 import { UserMenu } from "./user-menu";
 
 /** Carbon breadcrumbs: organization switcher, then the current module. */
@@ -115,7 +116,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             ref={setActionsSlot}
             className="col-span-3 row-start-2 flex flex-wrap items-center justify-end gap-2 empty:hidden"
           />
-          <div className="col-start-3 row-start-1 shrink-0">
+          <div className="col-start-3 row-start-1 flex shrink-0 items-center gap-2">
+            <BlockerAlert />
             <UserMenu />
           </div>
         </header>

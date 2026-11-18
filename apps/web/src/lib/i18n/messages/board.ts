@@ -3,6 +3,20 @@ import type { Catalog } from "../config";
 /** board strings. Keys are the English text exactly as passed to t(). */
 export const board: Catalog = {
   pt: {
+    "Pending items": "Pendências",
+    "What is blocking this task?": "O que está bloqueando esta tarefa?",
+    "Describe what you need to continue…": "Descreva o que você precisa para continuar…",
+    "Administrators can see this blocker in Pending items.": "Os administradores podem ver este bloqueio em Pendências.",
+    "Update blocker": "Atualizar bloqueio",
+    "Report blocker": "Informar bloqueio",
+    "Resolve blocker": "Resolver bloqueio",
+    "Blocker reported": "Bloqueio informado",
+    "Blocker resolved": "Bloqueio resolvido",
+    "Could not update blocker": "Não foi possível atualizar o bloqueio",
+    "Blocked tasks and what members need to continue.": "Tarefas bloqueadas e o que os membros precisam para continuar.",
+    "Could not load pending items": "Não foi possível carregar as pendências",
+    "No pending blockers": "Nenhum bloqueio pendente",
+    "{n} pending blockers": "{n} bloqueios pendentes",
     // Proof when completing
     "Complete {key}": "Concluir {key}",
     "Where can the finished work be checked? The link stays on the card for anyone reviewing it.":
@@ -127,6 +141,20 @@ export const board: Catalog = {
     "Could not create task": "Não foi possível criar a tarefa",
   },
   es: {
+    "Pending items": "Pendientes",
+    "What is blocking this task?": "¿Qué está bloqueando esta tarea?",
+    "Describe what you need to continue…": "Describe qué necesitas para continuar…",
+    "Administrators can see this blocker in Pending items.": "Los administradores pueden ver este bloqueo en Pendientes.",
+    "Update blocker": "Actualizar bloqueo",
+    "Report blocker": "Informar bloqueo",
+    "Resolve blocker": "Resolver bloqueo",
+    "Blocker reported": "Bloqueo informado",
+    "Blocker resolved": "Bloqueo resuelto",
+    "Could not update blocker": "No se pudo actualizar el bloqueo",
+    "Blocked tasks and what members need to continue.": "Tareas bloqueadas y lo que los miembros necesitan para continuar.",
+    "Could not load pending items": "No se pudieron cargar los pendientes",
+    "No pending blockers": "No hay bloqueos pendientes",
+    "{n} pending blockers": "{n} bloqueos pendientes",
     // Proof when completing
     "Complete {key}": "Completar {key}",
     "Where can the finished work be checked? The link stays on the card for anyone reviewing it.":

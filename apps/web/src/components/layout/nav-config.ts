@@ -1,4 +1,5 @@
 import {
+  OctagonAlertIcon,
   BarChart3Icon,
   BotIcon,
   Columns3Icon,
@@ -26,6 +27,7 @@ export const NAV_SECTIONS: NavSection[] = [
     title: "General",
     items: [
       { href: "/", label: "Board", icon: Columns3Icon, match: ["/"] },
+      { href: "/blockers", label: "Pending items", icon: OctagonAlertIcon, match: ["/blockers"] },
       {
         href: "/timeline",
         label: "Timeline",
