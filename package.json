@@ -9,6 +9,7 @@
     "apps/website",
     "apps/mcp",
     "apps/setup",
+    "apps/create",
     "packages/api-client",
     "packages/mcp-server"
   ],

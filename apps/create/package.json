@@ -1,0 +1,49 @@
+{
+  "name": "create-team-ops",
+  "version": "0.1.0",
+  "description": "Scaffold a self-hosted Team-Ops instance: npm create team-ops@latest my-team",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "create-team-ops": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IgorPierre/team-ops",
+    "directory": "apps/create"
+  },
+  "keywords": [
+    "team-ops",
+    "kanban",
+    "create",
+    "scaffold",
+    "mcp",
+    "agents"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "node build.mjs",
+    "prepack": "npm run build",
+    "lint": "echo 'ok'",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@clack/prompts": "^1.9.0",
+    "@types/node": "^22.15.18",
+    "esbuild": "^0.25.8",
+    "picocolors": "^1.1.1",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.3"
+  }
+}
